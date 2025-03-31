@@ -1,0 +1,25 @@
+.wrapper {
+    padding: 10px;
+    .d-flex {
+        gap: 5px;
+    }
+
+    .title {
+        font-family: 'Arial', sans-serif;
+        font-size: 24px;
+        color: #003087;
+        margin-left: 15px;
+        font-weight: bold;
+        line-height: 1;
+        span {
+            display: block;
+        }
+    }
+
+    .ms-auto {
+        margin-left: auto;
+    }
+    .form-control {
+        width: 200px;
+    }
+}

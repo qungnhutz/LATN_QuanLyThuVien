@@ -4,10 +4,11 @@ import Header from '../../Header/Header';
 import Footer from '../../Footer/Footer';
 import MenuLeft from '../../MenuLeft/MenuLeft';
 import MainBooks from '../ListBook/Mainbook';
-import { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import request from '../../../../../config/Connect';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const cx = classNames.bind(styles);
 
@@ -15,10 +16,11 @@ function DetailCategory() {
     const [books, setBooks] = useState([]);
     const [categoryName, setCategoryName] = useState('');
     const { madanhmuc } = useParams(); // Lấy madanhmuc từ URL
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchBooksByCategory = async () => {
-            console.log('madanhmuc từ URL:', madanhmuc); // Debug giá trị madanhmuc
+            console.log('madanhmuc từ URL:', madanhmuc);
             if (!madanhmuc) {
                 setBooks([]);
                 setCategoryName('Không có mã danh mục');
@@ -27,11 +29,10 @@ function DetailCategory() {
 
             try {
                 const res = await request.get('/api/getBooksByCategory', {
-                    params: { madanhmuc: madanhmuc }, // Gửi madanhmuc như CT_PL
+                    params: { madanhmuc: madanhmuc },
                 });
                 setBooks(res.data.books);
 
-                // Lấy tendanhmuc để hiển thị tên danh mục
                 const categoryRes = await request.get('/api/getAllCategories');
                 const category = categoryRes.data.data.find(
                     (cat) => cat.madanhmuc === madanhmuc
@@ -57,6 +58,10 @@ function DetailCategory() {
         fetchBooksByCategory();
     }, [madanhmuc]);
 
+    const handleBack = () => {
+        navigate('/categories');
+    };
+
     return (
         <div className={cx('wrapper')}>
             <header className={cx('header')}>
@@ -70,24 +75,59 @@ function DetailCategory() {
 
                 <main className={cx('content')}>
                     <Box sx={{ padding: 2 }}>
-                        <Typography
-                            variant="h4"
-                            gutterBottom
+                        {/* Container cho nút và tiêu đề */}
+                        <Box
                             sx={{
-                                fontWeight: 'bold',
-                                color: '#2C3E50',
-                                textAlign: 'center',
-                                textTransform: 'uppercase',
-                                letterSpacing: 1.5,
-                                padding: '10px 0',
-                                borderBottom: '3px solid #3498DB',
-                                display: 'inline-block',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between', // Đẩy nút sang trái, tiêu đề ra giữa
+                                mb: 3, // Khoảng cách dưới
+                                position: 'relative',
                             }}
                         >
-                            📚 {categoryName ? `Danh mục: ${categoryName}` : 'Danh mục sách'}
-                        </Typography>
+                            {/* Nút Quay lại */}
+                            <Button
+                                variant="outlined"
+                                startIcon={<ArrowBackIcon />}
+                                onClick={handleBack}
+                                sx={{
+                                    borderColor: '#3498DB',
+                                    color: '#3498DB',
+                                    '&:hover': {
+                                        borderColor: '#2C3E50',
+                                        color: '#2C3E50',
+                                    },
+                                    textTransform: 'none',
+                                    zIndex: 10, // Đảm bảo nút không bị đè
+                                }}
+                            >
+                                Quay lại
+                            </Button>
+
+                            {/* Tiêu đề */}
+                            <Typography
+                                variant="h4"
+                                sx={{
+                                    fontWeight: 'bold',
+                                    color: '#2C3E50',
+                                    textAlign: 'center',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: 1.5,
+                                    borderBottom: '3px solid #3498DB',
+                                    paddingBottom: '5px',
+                                    flexGrow: 1, // Để tiêu đề chiếm không gian còn lại
+                                }}
+                            >
+                                📚 {categoryName ? `Danh mục: ${categoryName}` : 'Danh mục sách'}
+                            </Typography>
+
+                            {/* Placeholder để cân bằng layout nếu cần */}
+                            <Box sx={{ width: '80px' }} /> {/* Điều chỉnh độ rộng nếu cần */}
+                        </Box>
+
+                        {/* Nội dung sách */}
                         {books.length > 0 ? (
-                            <MainBooks dataBooks={books} isMenuOpen={true} /> // Giữ nguyên isMenuOpen để hiển thị 3 cột nếu menu mở
+                            <MainBooks dataBooks={books} isMenuOpen={true} />
                         ) : (
                             <Typography variant="body1" sx={{ textAlign: 'center', mt: 2 }}>
                                 Không có sách nào trong danh mục này.

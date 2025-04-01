@@ -14,17 +14,15 @@ function ManagementBooks() {
     const [showModalAddBook, setShowModalAddBook] = useState(false);
     const [showModalEditBook, setShowModalEditBook] = useState(false);
     const [showModalDeleteBook, setShowModalDeleteBook] = useState(false);
-    const [idBook, setIdBook] = useState(''); // Dùng cho ModalEditBook (masach)
-    const [masachBook, setMasachBook] = useState(''); // Dùng cho ModalDeleteBook (masach)
+    const [idBook, setIdBook] = useState('');
+    const [masachBook, setMasachBook] = useState('');
     const [dataBooks, setDataBooks] = useState([]);
     const [searchValue, setSearchValue] = useState('');
     const debounce = useDebounce(searchValue, 500);
 
-    // State cho phân trang
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10); // Số lượng sách mỗi trang
+    const [itemsPerPage] = useState(10);
 
-    // Hàm định dạng ngày
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
@@ -34,43 +32,40 @@ function ManagementBooks() {
         return `${day}/${month}/${year}`;
     };
 
-    // Gọi API /api/GetBooks để lấy toàn bộ danh sách sách
     useEffect(() => {
         request
             .get('/api/GetBooks')
             .then((res) => {
                 setDataBooks(res.data);
-                setCurrentPage(1); // Reset về trang đầu khi dữ liệu thay đổi
-                console.log('Danh sách sách:', res.data); // Debug dữ liệu
+                setCurrentPage(1);
+                console.log('Danh sách sách:', res.data);
             })
             .catch((error) => console.error('Lỗi khi lấy sách:', error));
     }, [showModalAddBook, showModalEditBook, showModalDeleteBook]);
 
-    // Tìm kiếm sách bằng API /api/search
     useEffect(() => {
         const fetchSearchResults = async () => {
             try {
                 if (searchValue.trim() === '') {
                     const res = await request.get('/api/GetBooks');
                     setDataBooks(res.data);
-                    setCurrentPage(1); // Reset về trang đầu khi dữ liệu thay đổi
+                    setCurrentPage(1);
                     return;
                 }
 
-                const res = await request.get('/api/search', {
-                    params: { nameBook: debounce },
+                const res = await request.get('/api/SearchProduct', {
+                    params: { tensach: debounce }, // Sửa thành tensach để khớp với backend
                 });
 
-                // API trả về dữ liệu đã được định dạng từ server
                 setDataBooks(res.data);
-                setCurrentPage(1); // Reset về trang đầu khi tìm kiếm
+                setCurrentPage(1);
             } catch (error) {
                 console.error('Lỗi khi tìm kiếm:', error);
                 if (error.response?.status === 400) {
-                    console.log('Thông báo từ server:', error.response.data.message); // "Vui lòng nhập từ khóa tìm kiếm!"
+                    console.log('Thông báo từ server:', error.response.data.message);
                     setDataBooks([]);
                 } else if (error.response?.status === 404) {
-                    console.log('Thông báo từ server:', error.response.data.message); // "Không tìm thấy sách !!!"
+                    console.log('Thông báo từ server:', error.response.data.message);
                     setDataBooks([]);
                 } else {
                     console.error('Lỗi server:', error.response?.data?.message || 'Lỗi không xác định');
@@ -82,24 +77,22 @@ function ManagementBooks() {
         fetchSearchResults();
     }, [debounce]);
 
-    // Tính toán dữ liệu hiển thị cho trang hiện tại
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = dataBooks.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(dataBooks.length / itemsPerPage);
 
-    // Hàm chuyển trang
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
-    console.log(currentItems);
+
     const handleShow = () => {
         setShowModalAddBook(!showModalAddBook);
     };
 
     const handleShow1 = (masach) => {
         setShowModalEditBook(!showModalEditBook);
-        setIdBook(masach); // Truyền masach cho ModalEditBook
+        setIdBook(masach);
     };
 
     const handleShow2 = (masach) => {
@@ -110,7 +103,6 @@ function ManagementBooks() {
 
     return (
         <div className={cx('wrapper')}>
-            {/* Header */}
             <div className="container my-4">
                 <div className="row align-items-center justify-content-between g-3">
                     <div className="col-12 col-md-4 text-center text-md-start">
@@ -136,7 +128,6 @@ function ManagementBooks() {
                 </div>
             </div>
 
-            {/* Table */}
             <div className="container">
                 <div className="table-responsive">
                     <table className="table table-striped table-hover table-bordered align-middle">
@@ -166,8 +157,8 @@ function ManagementBooks() {
                                     <td>{item.phienban}</td>
                                     <td>{item.madanhmuc}</td>
                                     <td>{item.namxb}</td>
-                                    <td>{item.vitri.map((e)=>`${e.mavitri},`) || 'N/A'}</td>
-                                    <td>{item.Tongsoluong || item.Tongsoluong || 0}</td> {/* Ưu tiên currentQuantity */}
+                                    <td>{item.vitri.map((e) => `${e.mavitri}, `) || 'N/A'}</td>
+                                    <td>{item.Tongsoluong || item.currentQuantity || 0}</td>
                                     <td>{formatDate(item.ngaycapnhat)}</td>
                                     <td>
                                         <div className="d-flex gap-2 justify-content-center">
@@ -198,7 +189,6 @@ function ManagementBooks() {
                     </table>
                 </div>
 
-                {/* Pagination */}
                 {dataBooks.length > 0 && (
                     <nav aria-label="Page navigation">
                         <ul className="pagination justify-content-center mt-3">
@@ -238,7 +228,6 @@ function ManagementBooks() {
                 )}
             </div>
 
-            {/* Modals */}
             <ModalAddBook showModalAddBook={showModalAddBook} setShowModalAddBook={setShowModalAddBook} />
             <ModalEditBook
                 showModalEditBook={showModalEditBook}

@@ -20,12 +20,11 @@ function ManagementLocation() {
     const [selectedLocation, setSelectedLocation] = useState(null);
     const [selectedMavitri, setSelectedMavitri] = useState('');
     const [shouldRefresh, setShouldRefresh] = useState(false);
-    const [bookDetails, setBookDetails] = useState([]); // State để lưu danh sách sách chi tiết
-    const [showDetailModal, setShowDetailModal] = useState(false); // State để hiển thị modal chi tiết
+    const [bookDetails, setBookDetails] = useState([]);
+    const [showDetailModal, setShowDetailModal] = useState(false);
 
-    // State cho phân trang
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10); // Số lượng vị trí mỗi trang
+    const [itemsPerPage] = useState(10);
 
     const handleModalAddLocation = () => {
         setShowModalAddLocation(!showModalAddLocation);
@@ -53,49 +52,46 @@ function ManagementLocation() {
         setShouldRefresh(!shouldRefresh);
     };
 
-    // Hàm xử lý khi nhấn nút "Chi tiết"
     const handleShowDetail = async (mavitri) => {
         try {
-            const res = await request.get('/api/getBooksByLocation', {
-                params: { mavitri },
-            });
-            setBookDetails(res.data.data); // Lưu danh sách sách vào state
-            setShowDetailModal(true); // Hiển thị modal chi tiết
+            const res = await request.get(`/api/getBooksByLocation?mavitri=${mavitri}`);
+            console.log('Dữ liệu từ API:', res.data);
+            const books = res.data.data || [];
+            setBookDetails(books);
+            setShowDetailModal(true);
         } catch (error) {
             console.error('Lỗi khi lấy chi tiết sách:', error);
             if (error.response?.status === 404) {
                 toast.info('Không có sách nào tại vị trí này!', { autoClose: 3000 });
+                setBookDetails([]);
             } else {
                 toast.error('Lỗi khi lấy chi tiết sách!', { autoClose: 3000 });
+                setBookDetails([]);
             }
-            setBookDetails([]);
-            setShowDetailModal(true); // Vẫn mở modal để hiển thị thông báo "Không có sách"
+            setShowDetailModal(true);
         }
     };
 
-    // Chặn sự kiện Enter trong ô tìm kiếm
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
-            e.preventDefault(); // Ngăn hành vi mặc định của Enter
+            e.preventDefault();
         }
     };
 
-    // Fetch tất cả locations khi load trang hoặc sau khi thêm/sửa/xóa
     useEffect(() => {
-        request.get('/api/getAllLocations')
+        request
+            .get('/api/getAllLocations')
             .then((res) => {
-                setDataLocation(res.data.data);
-                setCurrentPage(1); // Reset về trang đầu khi dữ liệu thay đổi
+                setDataLocation(res.data.data || []);
+                setCurrentPage(1);
             })
             .catch((error) => console.error('Error fetching locations:', error));
     }, [shouldRefresh]);
 
-    // Xử lý tìm kiếm gần đúng theo mã vị trí (lọc phía client)
     const filteredLocations = dataLocation.filter((location) =>
         location.mavitri.toLowerCase().includes(valueSearch.toLowerCase())
     );
 
-    // Hàm định dạng ngày
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
@@ -105,13 +101,11 @@ function ManagementLocation() {
         return `${day}/${month}/${year}`;
     };
 
-    // Tính toán dữ liệu hiển thị cho trang hiện tại
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = filteredLocations.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(filteredLocations.length / itemsPerPage);
 
-    // Hàm chuyển trang
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
@@ -133,7 +127,7 @@ function ManagementLocation() {
                                 aria-label="Search"
                                 value={valueSearch}
                                 onChange={(e) => setValueSearch(e.target.value)}
-                                onKeyDown={handleKeyDown} // Thêm sự kiện chặn Enter
+                                onKeyDown={handleKeyDown}
                             />
                         </form>
                     </div>
@@ -199,7 +193,6 @@ function ManagementLocation() {
                     </table>
                 </div>
 
-                {/* Pagination */}
                 {filteredLocations.length > 0 && (
                     <nav aria-label="Page navigation">
                         <ul className="pagination justify-content-center mt-3">
@@ -239,7 +232,6 @@ function ManagementLocation() {
                 )}
             </div>
 
-            {/* Modal hiển thị chi tiết sách */}
             {showDetailModal && (
                 <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog modal-lg">
@@ -275,7 +267,9 @@ function ManagementLocation() {
                                                     <td>{book.tacgia}</td>
                                                     <td>{book.nhaxuatban}</td>
                                                     <td>{book.namxb}</td>
-                                                    <td>{book.currentQuantity || book.soluong || 0}</td>
+                                                    <td>
+                                                        {book.vitri.find(v => v.mavitri === bookDetails[0]?.vitri[0]?.mavitri)?.soluong || 0}
+                                                    </td>
                                                     <td>{formatDate(book.ngaycapnhat)}</td>
                                                 </tr>
                                             ))

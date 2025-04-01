@@ -1,6 +1,6 @@
 import classNames from 'classnames/bind';
 import styles from './MainBooks.module.scss';
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Thêm useEffect
 import { useNavigate } from 'react-router-dom';
 import ModalRequestBook from '../Modal/ModalRequestBook';
 import { Card, CardContent, CardMedia, Typography, Button, Box, Pagination } from '@mui/material';
@@ -8,21 +8,41 @@ import { Card, CardContent, CardMedia, Typography, Button, Box, Pagination } fro
 const cx = classNames.bind(styles);
 const ITEMS_PER_PAGE = 16; // Số lượng sách mỗi trang
 
-function MainBooks({ dataBooks, isMenuOpen }) {
+function MainBooks({ dataBooks, isMenuOpen, searchQuery = '' }) { // Thêm prop searchQuery
     const [show, setShow] = useState(false);
     const [selectedMasach, setSelectedMasach] = useState('');
     const [selectedTensach, setSelectedTensach] = useState('');
     const [selectedVitri, setSelectedVitri] = useState([]);
     const [currentPage, setCurrentPage] = useState(1); // State cho trang hiện tại
+    const [filteredBooks, setFilteredBooks] = useState(dataBooks); // State cho dữ liệu đã lọc
     const navigate = useNavigate();
 
-    // Tính toán tổng số trang
-    const totalPages = Math.ceil(dataBooks.length / ITEMS_PER_PAGE);
+    // Hàm lọc dữ liệu dựa trên searchQuery
+    const filterBooks = (query) => {
+        if (!query) {
+            return dataBooks; // Nếu không có từ khóa, trả về toàn bộ dữ liệu
+        }
+        return dataBooks.filter((book) =>
+            book.tensach.toLowerCase().includes(query.toLowerCase()) ||
+            book.masach.toLowerCase().includes(query.toLowerCase()) ||
+            book.tacgia.toLowerCase().includes(query.toLowerCase())
+        );
+    };
 
-    // Lấy dữ liệu cho trang hiện tại
+    // Cập nhật filteredBooks khi dataBooks hoặc searchQuery thay đổi
+    useEffect(() => {
+        const filtered = filterBooks(searchQuery);
+        setFilteredBooks(filtered);
+        setCurrentPage(1); // Reset về trang 1 khi tìm kiếm thay đổi
+    }, [dataBooks, searchQuery]);
+
+    // Tính toán tổng số trang dựa trên filteredBooks
+    const totalPages = Math.ceil(filteredBooks.length / ITEMS_PER_PAGE);
+
+    // Lấy dữ liệu cho trang hiện tại từ filteredBooks
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
-    const currentBooks = dataBooks.slice(startIndex, endIndex);
+    const currentBooks = filteredBooks.slice(startIndex, endIndex);
 
     const handleShow = (masach, tensach, vitri) => {
         setShow(true);

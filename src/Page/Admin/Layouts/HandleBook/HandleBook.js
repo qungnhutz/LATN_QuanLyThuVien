@@ -12,11 +12,9 @@ const cx = classNames.bind(styles);
 
 function HandleBook() {
     const [borrowedBooks, setBorrowedBooks] = useState([]);
-    // State cho phân trang
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10); // Số lượng phiếu mượn mỗi trang
+    const [itemsPerPage] = useState(10);
 
-    // Hàm định dạng ngày
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
@@ -32,18 +30,36 @@ function HandleBook() {
             const response = await request.get('/api/GetBorrowedBooks');
             const data = Array.isArray(response.data) ? response.data : [];
             setBorrowedBooks(data);
-            setCurrentPage(1); // Reset về trang đầu khi dữ liệu thay đổi
+            setCurrentPage(1);
         } catch (err) {
             console.error('Lỗi khi lấy sách đã mượn:', err);
             setBorrowedBooks([]);
         }
     };
 
+    // Hàm gọi API hủy các yêu cầu mượn chưa xác nhận
+    const cancelUnconfirmedBorrows = async () => {
+        try {
+            const response = await request.post('/api/cancelUnconfirmedBorrows');
+            if (response.data.success) {
+                console.log(response.data.message);
+                // Sau khi hủy, gọi lại fetchBorrowedBooks để cập nhật danh sách
+                await fetchBorrowedBooks();
+            }
+        } catch (err) {
+            console.error('Lỗi khi hủy yêu cầu mượn chưa xác nhận:', err.response?.data || err);
+        }
+    };
+
+    // Sử dụng useEffect để gọi cả hai hàm khi component mount
     useEffect(() => {
-        fetchBorrowedBooks();
+        const initialize = async () => {
+            await cancelUnconfirmedBorrows(); // Gọi API hủy trước
+            await fetchBorrowedBooks(); // Lấy danh sách sách mượn sau khi hủy
+        };
+        initialize();
     }, []);
 
-    // Xác nhận yêu cầu mượn sách
     const handleConfirmBorrow = async (maphieumuon) => {
         try {
             const response = await request.post('/api/confirmBorrowRequest', { maphieumuon });
@@ -54,7 +70,7 @@ function HandleBook() {
                     )
                 );
                 toast.success('Xác nhận yêu cầu mượn sách thành công!');
-                setCurrentPage(1); // Reset về trang đầu sau khi xác nhận
+                setCurrentPage(1);
             }
         } catch (err) {
             console.error('Lỗi khi xác nhận mượn:', err.response?.data || err);
@@ -62,9 +78,8 @@ function HandleBook() {
         }
     };
 
-    // Trả sách
     const handleReturnBook = async (maphieumuon, masach) => {
-        const ngaytra = new Date().toISOString().split('T')[0]; // Ngày hiện tại dạng YYYY-MM-DD
+        const ngaytra = new Date().toISOString().split('T')[0];
         try {
             const response = await request.post('/api/ReturnBook', {
                 maphieumuon,
@@ -80,7 +95,7 @@ function HandleBook() {
                     )
                 );
                 toast.success('Trả sách thành công!');
-                setCurrentPage(1); // Reset về trang đầu sau khi trả sách
+                setCurrentPage(1);
             }
         } catch (err) {
             console.error('Lỗi khi trả sách:', err.response?.data || err);
@@ -88,7 +103,6 @@ function HandleBook() {
         }
     };
 
-    // Gia hạn thời gian mượn
     const handleExtendBorrowing = async (maphieumuon) => {
         try {
             const response = await request.post('/api/ExtendBorrowing', { maphieumuon });
@@ -101,7 +115,7 @@ function HandleBook() {
                     )
                 );
                 toast.success('Gia hạn thời gian mượn thành công!');
-                setCurrentPage(1); // Reset về trang đầu sau khi gia hạn
+                setCurrentPage(1);
             }
         } catch (err) {
             console.error('Lỗi khi gia hạn:', err.response?.data || err);
@@ -109,13 +123,11 @@ function HandleBook() {
         }
     };
 
-    // Tính toán dữ liệu hiển thị cho trang hiện tại
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = borrowedBooks.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(borrowedBooks.length / itemsPerPage);
 
-    // Hàm chuyển trang
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
@@ -223,7 +235,6 @@ function HandleBook() {
                 </table>
             </div>
 
-            {/* Pagination */}
             {borrowedBooks.length > 0 && (
                 <nav aria-label="Page navigation">
                     <ul className="pagination justify-content-center mt-3">

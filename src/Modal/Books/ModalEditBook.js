@@ -25,9 +25,19 @@ function ModalEditBook({ showModalEditBook, setShowModalEditBook, idBook }) {
     const [pages, setPages] = useState('');
     const [price, setPrice] = useState('');
 
-    // State cho danh sách danh mục và vị trí từ database
-    const [bookGenres, setBookGenres] = useState([]);
+    // State cho chức năng tìm kiếm danh mục
+    const [categories, setCategories] = useState([]);
+    const [filteredCategories, setFilteredCategories] = useState([]);
+    const [categorySearchQuery, setCategorySearchQuery] = useState('');
+    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+    const [loadingCategories, setLoadingCategories] = useState(false);
+
+    // State cho chức năng tìm kiếm vị trí
     const [locations, setLocations] = useState([]);
+    const [filteredLocations, setFilteredLocations] = useState([]);
+    const [locationSearchQueries, setLocationSearchQueries] = useState(['']);
+    const [showLocationDropdowns, setShowLocationDropdowns] = useState([false]);
+    const [loadingLocations, setLoadingLocations] = useState(false);
 
     // Cấu hình toast
     const toastOptions = {
@@ -43,20 +53,11 @@ function ModalEditBook({ showModalEditBook, setShowModalEditBook, idBook }) {
 
     // Lấy danh sách danh mục và vị trí từ database
     useEffect(() => {
-        const fetchCategoriesAndLocations = async () => {
-            try {
-                const genresRes = await request.get('/api/getAllCategories');
-                setBookGenres(genresRes.data.data || []);
-
-                const locationsRes = await request.get('/api/getAllLocations'); // Giả định endpoint tồn tại
-                setLocations(locationsRes.data.data || []);
-            } catch (error) {
-                console.error('Error fetching categories or locations:', error);
-                toast.error('Không thể tải danh mục hoặc vị trí!', toastOptions);
-            }
-        };
-        fetchCategoriesAndLocations();
-    }, []);
+        if (showModalEditBook) {
+            fetchAllCategories();
+            fetchAllLocations();
+        }
+    }, [showModalEditBook]);
 
     // Lấy dữ liệu sách khi modal mở hoặc idBook thay đổi
     useEffect(() => {
@@ -64,6 +65,62 @@ function ModalEditBook({ showModalEditBook, setShowModalEditBook, idBook }) {
             fetchBookData();
         }
     }, [showModalEditBook, idBook]);
+
+    // Lọc danh mục dựa trên truy vấn tìm kiếm
+    useEffect(() => {
+        if (categorySearchQuery && categories.length > 0) {
+            const filtered = categories.filter((category) =>
+                category?.madanhmuc?.toLowerCase().includes(categorySearchQuery.toLowerCase())
+            );
+            setFilteredCategories(filtered);
+        } else {
+            setFilteredCategories(categories);
+        }
+    }, [categorySearchQuery, categories]);
+
+    // Lọc vị trí dựa trên truy vấn tìm kiếm
+    useEffect(() => {
+        if (locations.length > 0) {
+            const filtered = locationSearchQueries.map((query) =>
+                query
+                    ? locations.filter((location) =>
+                        location?.mavitri?.toLowerCase().includes(query.toLowerCase())
+                    )
+                    : locations
+            );
+            setFilteredLocations(filtered);
+        } else {
+            setFilteredLocations(locationSearchQueries.map(() => []));
+        }
+    }, [locationSearchQueries, locations]);
+
+    const fetchAllCategories = async () => {
+        try {
+            const response = await request.get('/api/getAllCategories');
+            const data = response.data.data || [];
+            setCategories(data);
+            setFilteredCategories(data);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            toast.error('Không thể tải danh sách danh mục!', toastOptions);
+            setCategories([]);
+            setFilteredCategories([]);
+        }
+    };
+
+    const fetchAllLocations = async () => {
+        try {
+            const response = await request.get('/api/getAllLocations');
+            const data = response.data.data || [];
+            setLocations(data);
+            setFilteredLocations([data]);
+        } catch (error) {
+            console.error('Error fetching locations:', error);
+            toast.error('Không thể tải danh sách vị trí!', toastOptions);
+            setLocations([]);
+            setFilteredLocations([[]]);
+        }
+    };
 
     const fetchBookData = async () => {
         try {
@@ -78,13 +135,13 @@ function ModalEditBook({ showModalEditBook, setShowModalEditBook, idBook }) {
                 setNamxb(bookData.namxb || '');
                 setPhienban(bookData.phienban || '');
                 setMadanhmuc(bookData.madanhmuc || '');
+                setCategorySearchQuery(bookData.madanhmuc || '');
                 setMota(bookData.mota || '');
-                setVitri(
-                    bookData.vitri.map((v) => ({
-                        mavitri: v.mavitri,
-                        soluong: v.soluong,
-                    })) || [{ mavitri: '', soluong: '' }]
-                );
+                const bookLocations = bookData.vitri || [{ mavitri: '', soluong: '' }];
+                setVitri(bookLocations);
+                setLocationSearchQueries(bookLocations.map((loc) => loc.mavitri || ''));
+                setShowLocationDropdowns(bookLocations.map(() => false));
+                setFilteredLocations(bookLocations.map(() => locations));
                 setPages(bookData.pages || '');
                 setPrice(bookData.price || '');
             } else {
@@ -96,12 +153,137 @@ function ModalEditBook({ showModalEditBook, setShowModalEditBook, idBook }) {
         }
     };
 
-    // Xử lý thêm vị trí mới
-    const handleAddLocation = () => {
-        setVitri([...vitri, { mavitri: '', soluong: '' }]);
+    // Xử lý tìm kiếm danh mục
+    const handleSearchCategory = async (query) => {
+        if (!query) {
+            toast.error('Vui lòng nhập mã danh mục để tìm kiếm!', toastOptions);
+            return;
+        }
+        setLoadingCategories(true);
+        try {
+            const response = await request.get('/api/searchCategories', {
+                params: { tendanhmuc: query },
+            });
+            const matchedCategories = response.data.data || [];
+            if (matchedCategories.length > 0) {
+                const category = matchedCategories[0];
+                setMadanhmuc(category.madanhmuc);
+                setCategorySearchQuery(category.madanhmuc);
+                setShowCategoryDropdown(false);
+                toast.success(`Đã chọn danh mục: ${category.madanhmuc}`, toastOptions);
+            } else {
+                toast.error('Không tìm thấy danh mục phù hợp!', toastOptions);
+            }
+        } catch (error) {
+            console.error('Error searching categories:', error);
+            toast.error(error.response?.data?.message || 'Lỗi khi tìm kiếm danh mục!', toastOptions);
+        } finally {
+            setLoadingCategories(false);
+        }
     };
 
-    // Xử lý thay đổi giá trị trong danh sách vị trí
+    const handleSelectCategory = (category) => {
+        setMadanhmuc(category.madanhmuc);
+        setCategorySearchQuery(category.madanhmuc);
+        setShowCategoryDropdown(false);
+    };
+
+    const handleCategoryInputChange = (e) => {
+        setCategorySearchQuery(e.target.value);
+        setMadanhmuc('');
+        setShowCategoryDropdown(true);
+    };
+
+    const handleCategoryInputFocus = () => {
+        setShowCategoryDropdown(true);
+    };
+
+    const handleCategoryInputBlur = () => {
+        setTimeout(() => setShowCategoryDropdown(false), 200);
+    };
+
+    // Xử lý tìm kiếm vị trí
+    const handleSearchLocation = async (query, index) => {
+        if (!query) {
+            toast.error('Vui lòng nhập mã vị trí để tìm kiếm!', toastOptions);
+            return;
+        }
+        setLoadingLocations(true);
+        try {
+            const response = await request.get('/api/getLocationByMaViTri', {
+                params: { mavitri: query },
+            });
+            const location = response.data.data;
+            const newVitri = [...vitri];
+            newVitri[index].mavitri = location.mavitri;
+            setVitri(newVitri);
+
+            const newQueries = [...locationSearchQueries];
+            newQueries[index] = location.mavitri;
+            setLocationSearchQueries(newQueries);
+
+            const newDropdowns = [...showLocationDropdowns];
+            newDropdowns[index] = false;
+            setShowLocationDropdowns(newDropdowns);
+
+            toast.success(`Đã chọn vị trí: ${location.mavitri}`, toastOptions);
+        } catch (error) {
+            console.error('Error searching location:', error);
+            toast.error(error.response?.data?.message || 'Không tìm thấy vị trí!', toastOptions);
+        } finally {
+            setLoadingLocations(false);
+        }
+    };
+
+    const handleSelectLocation = (location, index) => {
+        const newVitri = [...vitri];
+        newVitri[index].mavitri = location.mavitri;
+        setVitri(newVitri);
+
+        const newQueries = [...locationSearchQueries];
+        newQueries[index] = location.mavitri;
+        setLocationSearchQueries(newQueries);
+
+        const newDropdowns = [...showLocationDropdowns];
+        newDropdowns[index] = false;
+        setShowLocationDropdowns(newDropdowns);
+    };
+
+    const handleLocationInputChange = (e, index) => {
+        const newQueries = [...locationSearchQueries];
+        newQueries[index] = e.target.value;
+        setLocationSearchQueries(newQueries);
+
+        const newVitri = [...vitri];
+        newVitri[index].mavitri = '';
+        setVitri(newVitri);
+
+        const newDropdowns = [...showLocationDropdowns];
+        newDropdowns[index] = true;
+        setShowLocationDropdowns(newDropdowns);
+    };
+
+    const handleLocationInputFocus = (index) => {
+        const newDropdowns = [...showLocationDropdowns];
+        newDropdowns[index] = true;
+        setShowLocationDropdowns(newDropdowns);
+    };
+
+    const handleLocationInputBlur = (index) => {
+        setTimeout(() => {
+            const newDropdowns = [...showLocationDropdowns];
+            newDropdowns[index] = false;
+            setShowLocationDropdowns(newDropdowns);
+        }, 200);
+    };
+
+    const handleAddLocation = () => {
+        setVitri([...vitri, { mavitri: '', soluong: '' }]);
+        setLocationSearchQueries([...locationSearchQueries, '']);
+        setShowLocationDropdowns([...showLocationDropdowns, false]);
+        setFilteredLocations([...filteredLocations, locations]);
+    };
+
     const handleLocationChange = (index, field, value) => {
         const newVitri = [...vitri];
         newVitri[index][field] = value;
@@ -252,20 +434,57 @@ function ModalEditBook({ showModalEditBook, setShowModalEditBook, idBook }) {
                                     />
                                 </Form.Group>
 
-                                <Form.Group controlId="formMadanhmuc">
-                                    <Form.Label>Mã Danh Mục</Form.Label>
-                                    <Form.Select
-                                        value={madanhmuc}
-                                        onChange={(e) => setMadanhmuc(e.target.value)}
+                                <Form.Group controlId="formMadanhmuc" style={{ position: 'relative' }}>
+                                    <Form.Label>Danh Mục</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        placeholder="Nhập hoặc chọn mã danh mục"
+                                        value={categorySearchQuery}
+                                        onChange={handleCategoryInputChange}
+                                        onFocus={handleCategoryInputFocus}
+                                        onBlur={handleCategoryInputBlur}
+                                        onKeyPress={(e) => {
+                                            if (e.key === 'Enter') handleSearchCategory(categorySearchQuery);
+                                        }}
                                         className="shadow-sm"
-                                    >
-                                        <option value="">Chọn danh mục</option>
-                                        {bookGenres.map((genre) => (
-                                            <option key={genre.madanhmuc} value={genre.madanhmuc}>
-                                                {genre.madanhmuc} - {genre.tenLoai}
-                                            </option>
-                                        ))}
-                                    </Form.Select>
+                                        disabled={loadingCategories}
+                                    />
+                                    {showCategoryDropdown && filteredCategories.length > 0 && (
+                                        <div
+                                            style={{
+                                                position: 'absolute',
+                                                zIndex: 1000,
+                                                backgroundColor: 'white',
+                                                border: '1px solid #ccc',
+                                                maxHeight: '150px',
+                                                overflowY: 'auto',
+                                                width: '100%',
+                                                left: 0,
+                                                top: 'calc(100% + 5px)',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                                borderRadius: '4px',
+                                            }}
+                                        >
+                                            {filteredCategories.map((category) => (
+                                                <div
+                                                    key={category.madanhmuc}
+                                                    onMouseDown={() => handleSelectCategory(category)}
+                                                    style={{
+                                                        padding: '8px 12px',
+                                                        cursor: 'pointer',
+                                                        borderBottom: '1px solid #eee',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                    }}
+                                                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
+                                                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                                                >
+                                                    {category.madanhmuc}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </Form.Group>
 
                                 <Form.Group controlId="formMota">
@@ -311,31 +530,64 @@ function ModalEditBook({ showModalEditBook, setShowModalEditBook, idBook }) {
                             <Col md={12}>
                                 <Form.Label>Vị Trí</Form.Label>
                                 {vitri.map((loc, index) => (
-                                    <Row key={index} className="mb-2">
+                                    <Row key={index} className="mb-2" style={{ position: 'relative' }}>
                                         <Col md={6}>
-                                            <Form.Select
-                                                value={loc.mavitri}
-                                                onChange={(e) =>
-                                                    handleLocationChange(index, 'mavitri', e.target.value)
-                                                }
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="Nhập hoặc chọn vị trí"
+                                                value={locationSearchQueries[index]}
+                                                onChange={(e) => handleLocationInputChange(e, index)}
+                                                onFocus={() => handleLocationInputFocus(index)}
+                                                onBlur={() => handleLocationInputBlur(index)}
+                                                onKeyPress={(e) => {
+                                                    if (e.key === 'Enter') handleSearchLocation(locationSearchQueries[index], index);
+                                                }}
                                                 className="shadow-sm"
-                                            >
-                                                <option value="">Chọn vị trí</option>
-                                                {locations.map((location) => (
-                                                    <option key={location.mavitri} value={location.mavitri}>
-                                                        {location.mavitri} - {location.coso} - {location.soke}
-                                                    </option>
-                                                ))}
-                                            </Form.Select>
+                                                disabled={loadingLocations}
+                                            />
+                                            {showLocationDropdowns[index] && filteredLocations[index]?.length > 0 && (
+                                                <div
+                                                    style={{
+                                                        position: 'absolute',
+                                                        zIndex: 1000,
+                                                        backgroundColor: 'white',
+                                                        border: '1px solid #ccc',
+                                                        maxHeight: '150px',
+                                                        overflowY: 'auto',
+                                                        width: '100%',
+                                                        left: 0,
+                                                        top: 'calc(100% + 5px)',
+                                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                                        borderRadius: '4px',
+                                                    }}
+                                                >
+                                                    {filteredLocations[index].map((location) => (
+                                                        <div
+                                                            key={location.mavitri}
+                                                            onMouseDown={() => handleSelectLocation(location, index)}
+                                                            style={{
+                                                                padding: '8px 12px',
+                                                                cursor: 'pointer',
+                                                                borderBottom: '1px solid #eee',
+                                                                whiteSpace: 'nowrap',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                            }}
+                                                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
+                                                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                                                        >
+                                                            {location.mavitri} - {location.coso} - {location.soke}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </Col>
                                         <Col md={6}>
                                             <Form.Control
                                                 type="number"
                                                 placeholder="Nhập số lượng"
                                                 value={loc.soluong}
-                                                onChange={(e) =>
-                                                    handleLocationChange(index, 'soluong', e.target.value)
-                                                }
+                                                onChange={(e) => handleLocationChange(index, 'soluong', e.target.value)}
                                                 min="0"
                                                 className="shadow-sm"
                                             />

@@ -1,14 +1,16 @@
 import classNames from 'classnames/bind';
 import styles from './detailbook.module.scss';
 import Header from '../../Header/Header';
-import { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom'; // Thêm useNavigate
 import request from '../../../../../config/Connect';
 import MenuLeft from '../../MenuLeft/MenuLeft';
 import Footer from '../../Footer/Footer';
 import ModalRequestBook from '../Modal/ModalRequestBook';
-import 'bootstrap/dist/css/bootstrap.min.css'; // Đảm bảo import Bootstrap CSS
-import 'bootstrap-icons/font/bootstrap-icons.css'; // Import Bootstrap Icons
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
+import { Button, Box } from '@mui/material'; // Thêm Button và Box từ MUI
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'; // Icon mũi tên quay lại
 
 const cx = classNames.bind(styles);
 
@@ -18,6 +20,7 @@ const DetailBook = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showModal, setShowModal] = useState(false);
+    const navigate = useNavigate(); // Hook để điều hướng
 
     // Hàm định dạng ngày
     const formatDate = (dateString) => {
@@ -29,8 +32,7 @@ const DetailBook = () => {
         return `${day}/${month}/${year}`;
     };
 
-
-    // Gọi API /api/SearchBookByMaSach để lấy thông tin sách
+    // Gọi API để lấy thông tin sách
     useEffect(() => {
         const fetchBook = async () => {
             try {
@@ -48,6 +50,11 @@ const DetailBook = () => {
         fetchBook();
     }, [masach]);
 
+    // Hàm xử lý quay lại trang trước
+    const handleBack = () => {
+        navigate(-1); // Quay lại trang trước trong lịch sử
+    };
+
     if (loading) return <p className="text-center text-muted py-5"><i className="bi bi-hourglass-split me-2"></i>Đang tải...</p>;
     if (error) return <p className="text-danger text-center py-5"><i className="bi bi-exclamation-triangle me-2"></i>{error}</p>;
     if (!book) return <p className="text-center text-muted py-5"><i className="bi bi-book me-2"></i>Không tìm thấy sách.</p>;
@@ -64,7 +71,27 @@ const DetailBook = () => {
                 </aside>
 
                 <main className={cx('content')}>
-                    <div className="container my-5">
+                    <Box sx={{ padding: '0 15px', maxWidth: '1200px', margin: '0 auto' }}>
+                        {/* Nút Quay lại */}
+                        <Box sx={{ mb: 3, pt: 2 }}>
+                            <Button
+                                variant="outlined"
+                                startIcon={<ArrowBackIcon />}
+                                onClick={handleBack}
+                                sx={{
+                                    borderColor: '#3498DB',
+                                    color: '#3498DB',
+                                    '&:hover': {
+                                        borderColor: '#2C3E50',
+                                        color: '#2C3E50',
+                                    },
+                                    textTransform: 'none',
+                                }}
+                            >
+                                Quay lại
+                            </Button>
+                        </Box>
+
                         <div className="card shadow-lg border-0 rounded-3">
                             <div className="row g-0">
                                 <div className="col-md-4 p-4">
@@ -77,7 +104,7 @@ const DetailBook = () => {
                                 </div>
                                 <div className="col-md-8 p-4">
                                     <h1 className="fw-bold mb-4 text-primary">
-                                        <i className=""></i>{book.tensach}
+                                        <i className="bi bi-book me-2"></i>{book.tensach}
                                     </h1>
                                     <div className="row">
                                         <div className="col-md-6">
@@ -151,7 +178,7 @@ const DetailBook = () => {
                                                     <span>{v.mavitri}</span>
                                                     <div>
                                                         <span className="badge bg-primary me-2">
-                                                            Còn: {v.soluong}
+                                                            Còn: {v.soluong_con}
                                                         </span>
                                                         <span className="badge bg-warning text-dark">
                                                             Mượn: {v.soluongmuon}
@@ -176,7 +203,7 @@ const DetailBook = () => {
                                 <p className="text-muted">{book.mota}</p>
                             </div>
                         </div>
-                    </div>
+                    </Box>
                 </main>
             </div>
 
@@ -189,7 +216,7 @@ const DetailBook = () => {
                 setShow={setShowModal}
                 masach={book.masach}
                 tensach={book.tensach}
-                vitri={book.vitri} // Thêm props vitri
+                vitri={book.vitri}
             />
         </div>
     );

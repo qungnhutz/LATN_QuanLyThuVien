@@ -18,7 +18,9 @@ function DetailCategory() {
     const { madanhmuc } = useParams(); // Lấy madanhmuc từ URL
     const navigate = useNavigate();
 
+
     useEffect(() => {
+        document.title = "Sách theo danh mục";
         const fetchBooksByCategory = async () => {
             console.log('madanhmuc từ URL:', madanhmuc);
             if (!madanhmuc) {

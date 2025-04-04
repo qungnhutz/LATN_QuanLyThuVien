@@ -43,7 +43,9 @@ function InfoUser() {
         typereader: '',
         sdt: '',
     });
-
+    useEffect(() => {
+        document.title = "Thông tin người dùng";
+    }, []);
     // Lấy thông tin người dùng
     useEffect(() => {
         fetchUserInfo()

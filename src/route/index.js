@@ -12,6 +12,7 @@ import DetailBook from '../Page/HomePage/Layouts/Main/DetaiBook/detailbook';
 import Contact from '../Page/Support/Contact/Contact';
 import Categories from '../Page/HomePage/Layouts/Main/Categories/Categories';
 import DetailCategory from '../Page/HomePage/Layouts/Main/Categories/DetaiCategory';
+import Guide from '../Page/Support/Guide/Guide';
 
 export const publicRoutes = [
     { path: '/', element: <Login /> },
@@ -19,6 +20,7 @@ export const publicRoutes = [
     { path: '/forgot', element: <Forgetpassword /> },
     { path: '/about', element: <LibraryIntro /> },
     { path: '/contact', element: <Contact /> },
+    { path: '/guide', element: <Guide /> },
 ];
 
 export const privateRoutes1 = [

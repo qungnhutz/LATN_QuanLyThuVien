@@ -1,181 +1,230 @@
 import classNames from 'classnames/bind';
 import styles from './Contact.module.scss';
-import { useState, useEffect } from 'react';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Container, Grid, Typography, Card, CardContent, CardMedia, Box, Divider, Button } from '@mui/material';
+import { styled } from '@mui/system';
+import { GoogleMap, Marker, useLoadScript } from '@react-google-maps/api'; // Thêm useLoadScript
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
-
 import Header from '../../HomePage/Layouts/Header/Header';
-import MenuLeft from '../../HomePage/Layouts/MenuLeft/MenuLeft'; // Import MenuLeft
+import MenuLeft from '../../HomePage/Layouts/MenuLeft/MenuLeft';
 import Footer from '../../HomePage/Layouts/Footer/Footer';
 
 const cx = classNames.bind(styles);
 
+// Styled components với MUI
+const StyledCard = styled(Card)(({ theme }) => ({
+    borderRadius: '16px',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)',
+    transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+    '&:hover': {
+        transform: 'translateY(-10px)',
+        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.2)',
+    },
+}));
+
+const StyledCardMedia = styled(CardMedia)({
+    height: 200,
+    objectFit: 'cover',
+    borderTopLeftRadius: '16px',
+    borderTopRightRadius: '16px',
+});
+
+const TitleTypography = styled(Typography)(({ theme }) => ({
+    fontWeight: 700,
+    color: '#1976d2',
+    textAlign: 'center',
+    marginBottom: theme.spacing(4),
+}));
+
+// Cấu hình bản đồ
+const mapContainerStyle = {
+    width: '100%',
+    height: '300px',
+    borderRadius: '8px',
+    marginTop: '16px',
+};
+
+// Tọa độ cho các cơ sở
+const locations = {
+    hanoi1: { lat: 21.0005, lng: 105.8606 }, // 454 Minh Khai, Hai Bà Trưng, Hà Nội
+    hanoi2: { lat: 20.9875, lng: 105.8385 }, // 218 Lĩnh Nam, Hoàng Mai, Hà Nội
+    namdinh: { lat: 20.4333, lng: 106.1667 }, // 353 Trần Hưng Đạo, Nam Định
+};
+
 function Contact() {
-    // State cho biểu mẫu
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        message: '',
+    const [showMap, setShowMap] = useState({ hanoi1: false, hanoi2: false, namdinh: false });
+
+    // Tải Google Maps API
+    const { isLoaded, loadError } = useLoadScript({
+        googleMapsApiKey: 'AIzaSyCvO8HGZOTpaJwi7e-BegcOx_XTlJxbrq4', // Thay bằng khóa API của bạn
     });
 
-    // State cho ý kiến phản hồi
-    const [feedback, setFeedback] = useState('');
+    useEffect(() => {
+        document.title = 'Liên hệ';
+    }, []);
 
-    // State cho chiều cao của MenuLeft
-    const [menuHeight, setMenuHeight] = useState(window.innerHeight - 60 - 100);
-
-    const handleFormChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+    const toggleMap = (location) => {
+        setShowMap((prev) => ({ ...prev, [location]: !prev[location] }));
     };
 
-    const handleFeedbackChange = (e) => {
-        setFeedback(e.target.value);
+    const cardVariants = {
+        hidden: { opacity: 0, y: 50 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
     };
 
-    const handleFormSubmit = (e) => {
-        e.preventDefault();
-        if (!formData.name || !formData.email || !formData.message) {
-            return toast.error('Vui lòng nhập đầy đủ thông tin');
-        }
-        toast.success('Yêu cầu của bạn đã được gửi!');
-        setFormData({ name: '', email: '', message: '' });
-    };
+    // Thành phần bản đồ
+    const MapComponent = ({ center }) => {
+        if (!isLoaded) return <div>Đang tải bản đồ...</div>;
+        if (loadError) return <div>Lỗi khi tải bản đồ</div>;
 
-    const handleFeedbackSubmit = (e) => {
-        e.preventDefault();
-        if (!feedback) {
-            return toast.error('Vui lòng nhập ý kiến phản hồi');
-        }
-        toast.success('Ý kiến phản hồi của bạn đã được gửi!');
-        setFeedback('');
+        return (
+            <GoogleMap
+                mapContainerStyle={mapContainerStyle}
+                center={center}
+                zoom={15}
+                options={{ disableDefaultUI: false }}
+            >
+                <Marker position={center} />
+            </GoogleMap>
+        );
     };
 
     return (
         <div className={cx('wrapper')}>
-            <ToastContainer />
             <header className={cx('header')}>
                 <Header />
             </header>
-            {/* Phần chính với MenuLeft và Content */}
+
             <div className={cx('main-container')}>
-                <aside className={cx('menu-left')} >
+                <aside className={cx('menu-left')}>
                     <MenuLeft />
                 </aside>
 
                 <main className={cx('content')}>
-                    <div className="container py-4">
-                        <h2 className={cx('section-title')}>Liên hệ</h2>
-                        <div className="row g-4">
-                            {/* Thông tin liên hệ trung tâm thư viện */}
-                            <div className="col-md-4">
-                                <div className="card border-0 shadow-sm h-100">
-                                    <img
-                                        src="https://images.unsplash.com/photo-1516321497487-e288fb19713f?q=80&w=1000&auto=format&fit=crop"
-                                        alt="Library"
-                                        className="card-img-top"
-                                    />
-                                    <div className="card-body">
-                                        <h5 className="card-title">Thông tin liên hệ trung tâm thư viện</h5>
-                                        <p className="card-text">
-                                            <strong>Cơ sở Hà Nội:</strong><br />
-                                            Tầng 1 - HAS - 454 Minh Khai, Q. Hai Bà Trưng, TP. Hà Nội<br />
-                                            Tầng 2 - HA10 - 218 Lĩnh Nam, Q. Hoàng Mai, TP. Hà Nội<br />
-                                            <strong>Cơ sở Nam Định:</strong><br />
-                                            353 Trần Hưng Đạo, TP. Nam Định, Nam Định
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                    <Container maxWidth="lg" sx={{ py: 6 }}>
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
+                            <TitleTypography variant="h3">Liên hệ với chúng tôi</TitleTypography>
+                        </motion.div>
 
-                            {/* Biểu mẫu */}
-                            <div className="col-md-4">
-                                <div className="card border-0 shadow-sm h-100">
-                                    <img
-                                        src="/contact.jpg"
-                                        alt="Form"
-                                        className="card-img-top"
-                                    />
-                                    <div className="card-body">
-                                        <h5 className="card-title">Biểu mẫu</h5>
-                                        <form onSubmit={handleFormSubmit}>
-                                            <div className="mb-3">
-                                                <label htmlFor="name" className="form-label">Họ và tên</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    id="name"
-                                                    name="name"
-                                                    value={formData.name}
-                                                    onChange={handleFormChange}
-                                                    placeholder="Nhập họ và tên"
-                                                />
-                                            </div>
-                                            <div className="mb-3">
-                                                <label htmlFor="email" className="form-label">Email</label>
-                                                <input
-                                                    type="email"
-                                                    className="form-control"
-                                                    id="email"
-                                                    name="email"
-                                                    value={formData.email}
-                                                    onChange={handleFormChange}
-                                                    placeholder="Nhập email"
-                                                />
-                                            </div>
-                                            <div className="mb-3">
-                                                <label htmlFor="message" className="form-label">Tin nhắn</label>
-                                                <textarea
-                                                    className="form-control"
-                                                    id="message"
-                                                    name="message"
-                                                    value={formData.message}
-                                                    onChange={handleFormChange}
-                                                    rows="3"
-                                                    placeholder="Nhập tin nhắn của bạn"
-                                                ></textarea>
-                                            </div>
-                                            <button type="submit" className="btn btn-primary w-100">
-                                                Gửi yêu cầu
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
+                        <Grid container spacing={4} justifyContent="center">
+                            {/* Cơ sở Hà Nội - Minh Khai */}
+                            <Grid item xs={12} md={4}>
+                                <motion.div variants={cardVariants} initial="hidden" animate="visible">
+                                    <StyledCard>
+                                        <StyledCardMedia
+                                            component="img"
+                                            image="uneti_MK.jpg"
+                                            alt="Hà Nội - Minh Khai"
+                                        />
+                                        <CardContent>
+                                            <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                                                Cơ sở Minh Khai, Hà Nội
+                                            </Typography>
+                                            <Divider sx={{ mb: 2 }} />
+                                            <Typography variant="body1" color="text.secondary">
+                                                <strong>Địa chỉ:</strong> 454 Minh Khai, Q. Hai Bà Trưng, TP. Hà Nội
+                                            </Typography>
+                                            <Box sx={{ mt: 2 }}>
+                                                <Button
+                                                    variant="text"
+                                                    color="primary"
+                                                    startIcon={<i className="bi bi-geo-alt-fill" />}
+                                                    onClick={() => toggleMap('hanoi1')}
+                                                >
+                                                    {showMap.hanoi1 ? 'Ẩn bản đồ' : 'Xem bản đồ'}
+                                                </Button>
+                                            </Box>
+                                            {showMap.hanoi1 && <MapComponent center={locations.hanoi1} />}
+                                        </CardContent>
+                                    </StyledCard>
+                                </motion.div>
+                            </Grid>
 
-                            {/* Ý kiến phản hồi */}
-                            <div className="col-md-4">
-                                <div className="card border-0 shadow-sm h-100">
-                                    <img
-                                        src="https://images.unsplash.com/photo-1516321497487-e288fb19713f?q=80&w=1000&auto=format&fit=crop"
-                                        alt="Feedback"
-                                        className="card-img-top"
-                                    />
-                                    <div className="card-body">
-                                        <h5 className="card-title">Ý kiến phản hồi</h5>
-                                        <form onSubmit={handleFeedbackSubmit}>
-                                            <div className="mb-3">
-                                                <label htmlFor="feedback" className="form-label">Ý kiến của bạn</label>
-                                                <textarea
-                                                    className="form-control"
-                                                    id="feedback"
-                                                    value={feedback}
-                                                    onChange={handleFeedbackChange}
-                                                    rows="5"
-                                                    placeholder="Nhập ý kiến phản hồi của bạn"
-                                                ></textarea>
-                                            </div>
-                                            <button type="submit" className="btn btn-primary w-100">
-                                                Gửi ý kiến
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                            {/* Cơ sở Hà Nội - Lĩnh Nam */}
+                            <Grid item xs={12} md={4}>
+                                <motion.div variants={cardVariants} initial="hidden" animate="visible">
+                                    <StyledCard>
+                                        <StyledCardMedia
+                                            component="img"
+                                            image="uneti_LN.jpg"
+                                            alt="Hà Nội - Lĩnh Nam"
+                                        />
+                                        <CardContent>
+                                            <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                                                Cơ sở Lĩnh Nam, Hà Nội
+                                            </Typography>
+                                            <Divider sx={{ mb: 2 }} />
+                                            <Typography variant="body1" color="text.secondary">
+                                                <strong>Địa chỉ:</strong> 218 Lĩnh Nam, Q. Hoàng Mai, TP. Hà Nội
+                                            </Typography>
+                                            <Box sx={{ mt: 2 }}>
+                                                <Button
+                                                    variant="text"
+                                                    color="primary"
+                                                    startIcon={<i className="bi bi-geo-alt-fill" />}
+                                                    onClick={() => toggleMap('hanoi2')}
+                                                >
+                                                    {showMap.hanoi2 ? 'Ẩn bản đồ' : 'Xem bản đồ'}
+                                                </Button>
+                                            </Box>
+                                            {showMap.hanoi2 && <MapComponent center={locations.hanoi2} />}
+                                        </CardContent>
+                                    </StyledCard>
+                                </motion.div>
+                            </Grid>
+
+                            {/* Cơ sở Nam Định */}
+                            <Grid item xs={12} md={4}>
+                                <motion.div variants={cardVariants} initial="hidden" animate="visible">
+                                    <StyledCard>
+                                        <StyledCardMedia
+                                            component="img"
+                                            image="/uneti_ND.jpg"
+                                            alt="Nam Định Campus"
+                                        />
+                                        <CardContent>
+                                            <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                                                Cơ sở Nam Định
+                                            </Typography>
+                                            <Divider sx={{ mb: 2 }} />
+                                            <Typography variant="body1" color="text.secondary">
+                                                <strong>Địa chỉ:</strong> 353 Trần Hưng Đạo, TP. Nam Định, Nam Định
+                                            </Typography>
+                                            <Box sx={{ mt: 2 }}>
+                                                <Button
+                                                    variant="text"
+                                                    color="primary"
+                                                    startIcon={<i className="bi bi-geo-alt-fill" />}
+                                                    onClick={() => toggleMap('namdinh')}
+                                                >
+                                                    {showMap.namdinh ? 'Ẩn bản đồ' : 'Xem bản đồ'}
+                                                </Button>
+                                            </Box>
+                                            {showMap.namdinh && <MapComponent center={locations.namdinh} />}
+                                        </CardContent>
+                                    </StyledCard>
+                                </motion.div>
+                            </Grid>
+                        </Grid>
+
+                        {/* Thông tin bổ sung */}
+                        <Box sx={{ mt: 6, textAlign: 'center' }}>
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.8 }}
+                            >
+                                <Typography variant="h6" color="text.secondary">
+                                    Liên hệ qua email: <strong>thuvien@uneti.edu.vn</strong>
+                                </Typography>
+                                <Typography variant="h6" color="text.secondary" sx={{ mt: 1 }}>
+                                    Hotline: <strong>0988-123-456</strong>
+                                </Typography>
+                            </motion.div>
+                        </Box>
+                    </Container>
                 </main>
             </div>
 

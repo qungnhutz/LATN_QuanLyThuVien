@@ -11,15 +11,14 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 const Report = () => {
     const [bookStats, setBookStats] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [month, setMonth] = useState(new Date().getMonth() + 1); // Mặc định tháng hiện tại
-    const [year, setYear] = useState(new Date().getFullYear()); // Mặc định năm hiện tại
-    // State cho phân trang
+    const [month, setMonth] = useState(new Date().getMonth() + 1);
+    const [year, setYear] = useState(new Date().getFullYear());
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10); // Số lượng mục mỗi trang
+    const [itemsPerPage] = useState(10);
 
     useEffect(() => {
         fetchBookStats();
-    }, [month, year]); // Gọi lại khi month hoặc year thay đổi
+    }, [month, year]);
 
     const fetchBookStats = async () => {
         try {
@@ -27,11 +26,11 @@ const Report = () => {
             const response = await axios.get('http://localhost:5000/api/getBookBorrowByMonth', {
                 params: { month, year }
             });
-            setBookStats(response.data.data || []); // Đảm bảo bookStats không bị undefined
-            setCurrentPage(1); // Reset về trang đầu khi dữ liệu thay đổi
+            setBookStats(response.data.data || []);
+            setCurrentPage(1);
         } catch (error) {
             console.error('Lỗi khi lấy thống kê sách:', error);
-            setBookStats([]); // Reset dữ liệu nếu có lỗi
+            setBookStats([]);
         } finally {
             setLoading(false);
         }
@@ -46,7 +45,6 @@ const Report = () => {
                 responseType: 'blob',
                 params: { month, year }
             });
-
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
@@ -61,88 +59,107 @@ const Report = () => {
         }
     };
 
-    // Dữ liệu cho biểu đồ Top 3 sách mượn nhiều nhất
-    const getMostChartData = () => {
+    // Dữ liệu cho biểu đồ thanh ngang
+    const getChartData = () => {
         if (bookStats.length === 0) return {};
 
-        const top3MostBorrowed = bookStats.slice(0, 3);
+        const currentItems = bookStats.slice(
+            (currentPage - 1) * itemsPerPage,
+            currentPage * itemsPerPage
+        );
+
         return {
-            labels: top3MostBorrowed.map(book => book.tensach),
+            labels: currentItems.map(book => book.tensach),
             datasets: [
                 {
                     label: 'Số lượt mượn',
-                    data: top3MostBorrowed.map(book => book.tongluotmuon),
-                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    data: currentItems.map(book => book.tongluotmuon),
+                    backgroundColor: currentItems.map(() =>
+                        'linear-gradient(90deg, rgba(54, 162, 235, 0.8), rgba(75, 192, 192, 0.8))'
+                    ), // Gradient cho từng thanh
                     borderColor: 'rgba(54, 162, 235, 1)',
                     borderWidth: 2,
-                    borderRadius: 5,
-                    barThickness: 40,
+                    borderRadius: 10, // Bo góc thanh
+                    barThickness: 20, // Độ dày thanh
+                    hoverBackgroundColor: 'rgba(255, 159, 64, 0.9)', // Màu khi hover
                 },
             ],
         };
     };
 
-    // Dữ liệu cho biểu đồ Top 3 sách mượn ít nhất
-    const getLeastChartData = () => {
-        if (bookStats.length === 0) return {};
-
-        const top3LeastBorrowed = bookStats.slice(-3).reverse();
-        return {
-            labels: top3LeastBorrowed.map(book => book.tensach),
-            datasets: [
-                {
-                    label: 'Số lượt mượn',
-                    data: top3LeastBorrowed.map(book => book.tongluotmuon),
-                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 2,
-                    borderRadius: 5,
-                    barThickness: 40,
+    // Cấu hình cho biểu đồ thanh ngang
+    const chartOptions = {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    font: { size: 14, family: 'Arial', weight: 'bold' },
+                    color: '#333',
                 },
-            ],
-        };
-    };
-
-    // Cấu hình chung cho biểu đồ
-    const chartOptions = (title, maxBorrowCount) => {
-        const maxY = Math.max(maxBorrowCount, 5);
-        const stepSize = maxBorrowCount > 5 ? 5 : 1;
-
-        return {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'top' },
+            },
+            title: {
+                display: true,
+                text: `Thống kê lượt mượn sách - Tháng ${month}/${year}`,
+                font: { size: 20, family: 'Arial', weight: 'bold' },
+                color: '#1e90ff',
+                padding: { top: 20, bottom: 20 },
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                titleFont: { size: 14, weight: 'bold' },
+                bodyFont: { size: 12 },
+                padding: 10,
+                cornerRadius: 5,
+                callbacks: {
+                    label: (context) => `${context.label}: ${context.raw} lượt mượn`,
+                },
+            },
+        },
+        scales: {
+            x: {
+                beginAtZero: true,
                 title: {
                     display: true,
-                    text: title,
-                    font: { size: 16, weight: 'bold' },
+                    text: 'Số lượt mượn',
+                    font: { size: 14, weight: 'bold' },
+                    color: '#555',
                 },
-                tooltip: {
-                    callbacks: {
-                        label: (context) => `${context.label}: ${context.raw} lượt mượn`,
-                    },
+                grid: {
+                    color: 'rgba(200, 200, 200, 0.3)', // Grid nhạt
                 },
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: maxY,
-                    title: { display: true, text: 'Số lượt mượn' },
-                    ticks: { stepSize, callback: (value) => Number.isInteger(value) ? value : null },
-                },
-                x: {
-                    title: { display: true, text: 'Tên sách' },
+                ticks: {
+                    font: { size: 12 },
+                    color: '#666',
                 },
             },
-            animation: { duration: 1500, easing: 'easeOutQuart' },
-        };
-    };
-
-    const getMaxBorrowCount = (dataFunc) => {
-        const data = dataFunc();
-        if (!data.datasets || data.datasets.length === 0) return 5;
-        return Math.max(...data.datasets[0].data);
+            y: {
+                title: {
+                    display: true,
+                    text: 'Tên sách',
+                    font: { size: 14, weight: 'bold' },
+                    color: '#555',
+                },
+                ticks: {
+                    font: { size: 12, family: 'Arial' },
+                    color: '#333',
+                },
+            },
+        },
+        animation: {
+            duration: 1500,
+            easing: 'easeOutBounce', // Hiệu ứng nảy khi xuất hiện
+        },
+        elements: {
+            bar: {
+                shadowOffsetX: 3,
+                shadowOffsetY: 3,
+                shadowBlur: 10,
+                shadowColor: 'rgba(0, 0, 0, 0.2)', // Bóng đổ cho thanh
+            },
+        },
     };
 
     // Tính toán dữ liệu hiển thị cho trang hiện tại
@@ -151,23 +168,22 @@ const Report = () => {
     const currentItems = bookStats.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(bookStats.length / itemsPerPage);
 
-    // Hàm chuyển trang
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
 
     return (
         <div className="container py-4">
-            <div className="card shadow-sm" style={{ borderRadius: '10px', overflow: 'hidden' }}>
-                <div className="card-header bg-primary text-white">
+            <div className="card shadow-lg" style={{ borderRadius: '15px', overflow: 'hidden', background: '#f9f9f9' }}>
+                <div className="card-header bg-gradient-primary text-white">
                     <div className="d-flex justify-content-between align-items-center">
                         <h4 className="mb-0">Báo Cáo Thống Kê Sách - Tháng {month}/{year}</h4>
                         <div className="d-flex align-items-center">
                             <select
-                                className="form-select me-2"
+                                className="form-select me-2 shadow-sm"
                                 value={month}
                                 onChange={(e) => setMonth(e.target.value)}
-                                style={{ width: 'auto' }}
+                                style={{ width: 'auto', borderRadius: '8px' }}
                             >
                                 {Array.from({ length: 12 }, (_, i) => (
                                     <option key={i + 1} value={i + 1}>
@@ -176,10 +192,10 @@ const Report = () => {
                                 ))}
                             </select>
                             <select
-                                className="form-select me-2"
+                                className="form-select me-2 shadow-sm"
                                 value={year}
                                 onChange={(e) => setYear(e.target.value)}
-                                style={{ width: 'auto' }}
+                                style={{ width: 'auto', borderRadius: '8px' }}
                             >
                                 {Array.from({ length: 10 }, (_, i) => (
                                     <option key={i} value={new Date().getFullYear() - i}>
@@ -188,9 +204,10 @@ const Report = () => {
                                 ))}
                             </select>
                             <button
-                                className="btn btn-light btn-sm"
+                                className="btn btn-light btn-sm shadow-sm"
                                 onClick={handleExportExcel}
                                 disabled={loading}
+                                style={{ borderRadius: '8px' }}
                             >
                                 <i className="bi bi-download me-2"></i>
                                 {loading ? 'Đang xuất...' : 'Xuất Excel'}
@@ -199,7 +216,7 @@ const Report = () => {
                     </div>
                 </div>
 
-                <div className="card-body">
+                <div className="card-body p-4">
                     {loading ? (
                         <div className="text-center py-4">
                             <div className="spinner-border text-primary" role="status">
@@ -208,23 +225,18 @@ const Report = () => {
                         </div>
                     ) : (
                         <>
-                            {bookStats.length >= 3 && (
-                                <div className="row mb-5">
-                                    <div className="col-md-6">
-                                        <div className="chart-container" style={{ height: '300px', padding: '15px' }}>
-                                            <Bar
-                                                data={getMostChartData()}
-                                                options={chartOptions('Top 3 sách mượn nhiều nhất', getMaxBorrowCount(getMostChartData))}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <div className="chart-container" style={{ height: '300px', padding: '15px' }}>
-                                            <Bar
-                                                data={getLeastChartData()}
-                                                options={chartOptions('Top 3 sách mượn ít nhất', getMaxBorrowCount(getLeastChartData))}
-                                            />
-                                        </div>
+                            {bookStats.length > 0 && (
+                                <div className="mb-5">
+                                    <div
+                                        className="chart-container shadow-sm"
+                                        style={{
+                                            height: '400px',
+                                            background: '#fff',
+                                            borderRadius: '10px',
+                                            padding: '15px',
+                                        }}
+                                    >
+                                        <Bar data={getChartData()} options={chartOptions} />
                                     </div>
                                 </div>
                             )}
@@ -264,7 +276,6 @@ const Report = () => {
                                 </table>
                             </div>
 
-                            {/* Pagination */}
                             {bookStats.length > 0 && (
                                 <nav aria-label="Page navigation">
                                     <ul className="pagination justify-content-center mt-3">
@@ -316,12 +327,16 @@ const Report = () => {
                     vertical-align: middle;
                 }
                 .table-hover tbody tr:hover {
-                    background-color: #f8f9fa;
+                    background-color: #f1f3f5;
                 }
                 .chart-container {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
+                    position: relative;
+                }
+                .bg-gradient-primary {
+                    background: linear-gradient(45deg, #1e90ff, #00ced1);
+                }
+                .btn-light:hover {
+                    background: #e0e0e0;
                 }
             `}</style>
         </div>

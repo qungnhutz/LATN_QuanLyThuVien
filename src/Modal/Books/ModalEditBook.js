@@ -284,6 +284,24 @@ function ModalEditBook({ showModalEditBook, setShowModalEditBook, idBook }) {
         setFilteredLocations([...filteredLocations, locations]);
     };
 
+    const handleRemoveLocation = (index) => {
+        if (vitri.length === 1) {
+            toast.error('Phải có ít nhất một vị trí!', toastOptions);
+            return;
+        }
+        const newVitri = vitri.filter((_, i) => i !== index);
+        setVitri(newVitri);
+
+        const newQueries = locationSearchQueries.filter((_, i) => i !== index);
+        setLocationSearchQueries(newQueries);
+
+        const newDropdowns = showLocationDropdowns.filter((_, i) => i !== index);
+        setShowLocationDropdowns(newDropdowns);
+
+        const newFilteredLocations = filteredLocations.filter((_, i) => i !== index);
+        setFilteredLocations(newFilteredLocations);
+    };
+
     const handleLocationChange = (index, field, value) => {
         const newVitri = [...vitri];
         newVitri[index][field] = value;
@@ -530,8 +548,8 @@ function ModalEditBook({ showModalEditBook, setShowModalEditBook, idBook }) {
                             <Col md={12}>
                                 <Form.Label>Vị Trí</Form.Label>
                                 {vitri.map((loc, index) => (
-                                    <Row key={index} className="mb-2" style={{ position: 'relative' }}>
-                                        <Col md={6}>
+                                    <Row key={index} className="mb-2 align-items-center" style={{ position: 'relative' }}>
+                                        <Col md={5}>
                                             <Form.Control
                                                 type="text"
                                                 placeholder="Nhập hoặc chọn vị trí"
@@ -582,7 +600,7 @@ function ModalEditBook({ showModalEditBook, setShowModalEditBook, idBook }) {
                                                 </div>
                                             )}
                                         </Col>
-                                        <Col md={6}>
+                                        <Col md={5}>
                                             <Form.Control
                                                 type="number"
                                                 placeholder="Nhập số lượng"
@@ -591,6 +609,15 @@ function ModalEditBook({ showModalEditBook, setShowModalEditBook, idBook }) {
                                                 min="0"
                                                 className="shadow-sm"
                                             />
+                                        </Col>
+                                        <Col md={2}>
+                                            <Button
+                                                variant="outline-danger"
+                                                onClick={() => handleRemoveLocation(index)}
+                                                className="w-100"
+                                            >
+                                                Xóa
+                                            </Button>
                                         </Col>
                                     </Row>
                                 ))}

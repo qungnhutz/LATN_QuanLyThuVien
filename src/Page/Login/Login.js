@@ -21,12 +21,12 @@ function Login() {
     const [checkSaveLogin, setCheckSaveLogin] = useState(true);
 
     useEffect(() => {
+        document.title = "Đăng nhập";
         const savedMaSinhVien = localStorage.getItem('masinhvien');
         const savedPassword = localStorage.getItem('password');
         if (savedMaSinhVien) setmasinhvien(savedMaSinhVien);
         if (savedPassword) setPassword(savedPassword);
     }, []);
-
     const handleLogin = async () => {
         if (!masinhvien || !password) {
             return toast.error('Vui lòng nhập đủ thông tin');

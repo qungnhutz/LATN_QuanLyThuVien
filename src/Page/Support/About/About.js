@@ -26,7 +26,9 @@ const LibraryIntro = () => {
         ]
     };
 
-
+    useEffect(() => {
+        document.title = "Giới thiệu";
+    }, []);
 
     const toggleSection = (section) => {
         setActiveSection(activeSection === section ? null : section);

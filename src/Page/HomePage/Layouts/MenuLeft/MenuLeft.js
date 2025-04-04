@@ -25,6 +25,7 @@ import {
     ContactMail as ContactIcon,
 } from '@mui/icons-material';
 import { LibraryBooks as LibraryBooksIcon } from '@mui/icons-material';
+import HelpIcon from '@mui/icons-material/Help';
 const cx = classNames.bind(styles);
 
 function MenuLeft() {
@@ -37,11 +38,11 @@ function MenuLeft() {
         { path: '/categories', name: 'Danh Mục Sách', icon: <LibraryBooksIcon /> },
         { path: '/history', name: 'Lịch Sử Mượn', icon: <HistoryIcon /> },
         { path: '/info', name: 'Thông Tin Tài Khoản', icon: <AccountIcon /> },
-        //{ path: '/admin', name: 'Quản Trị (Admin)', icon: <AdminIcon /> },
     ];
 
     const subMenuItems = [
         { path: '/about', name: 'Giới Thiệu', icon: <InfoIcon /> },
+        { path: '/guide', name: 'Hướng Dẫn', icon: <HelpIcon /> },
         { path: '/contact', name: 'Liên Hệ', icon: <ContactIcon /> },
     ];
 

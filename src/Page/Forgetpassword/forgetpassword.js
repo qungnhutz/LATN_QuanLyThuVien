@@ -2,7 +2,7 @@ import classNames from 'classnames/bind';
 import styles from './ForgotPassword.module.scss';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -20,6 +20,10 @@ function ForgotPassword() {
     const [errorMessage, setErrorMessage] = useState('');
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        document.title = "Quên mật khẩu";
+    }, []);
 
     const handleSubmit = async () => {
         setIsLoading(true);

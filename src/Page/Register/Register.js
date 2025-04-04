@@ -1,7 +1,7 @@
 import classNames from 'classnames/bind';
 import styles from './Login.module.scss';
 import { Link, useNavigate } from 'react-router-dom'; // Thêm useNavigate
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import request from '../../config/Connect';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -22,6 +22,10 @@ function Register() {
     const [sdt, setSdt] = useState('');
     const [typereader, setTypereader] = useState('Sinh viên');
     const navigate = useNavigate(); // Hook để điều hướng
+
+    useEffect(() => {
+        document.title = "Đăng ký";
+    }, []);
 
     const handleRegister = async () => {
         const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;

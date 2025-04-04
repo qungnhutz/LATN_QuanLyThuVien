@@ -5,7 +5,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import App from './App';
 import { jwtDecode } from 'jwt-decode';
 import { privateRoutes, privateRoutes1, publicRoutes } from './route';
-import MenuLeft from './Page/HomePage/Layouts/MenuLeft/MenuLeft';
+import favicon from '../src/asset/img/logo_tab.jpg';
+document.querySelector("link[rel~='icon']").href = favicon;
 
 const getToken = () => {
     const tokenCookie = document.cookie.split('; ').find(row => row.startsWith('token='));

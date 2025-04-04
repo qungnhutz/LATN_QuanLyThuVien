@@ -16,6 +16,7 @@ function HomePage() {
     const [searchValue, setSearchValue] = useState('');
     const debounce = useDebounce(searchValue, 500);
     useEffect(() => {
+        document.title = "Thư viện điện tử - Trang chủ";
         try {
             if (searchValue === '') {
                 return;
@@ -25,6 +26,8 @@ function HomePage() {
             console.log(error);
         }
     }, [debounce, searchValue]);
+
+
 
     useEffect(() => {
         request.get('/api/GetBooks').then((res) => setDataBooks(res.data));

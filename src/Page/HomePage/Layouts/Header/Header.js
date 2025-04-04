@@ -1,6 +1,5 @@
 import classNames from 'classnames/bind';
 import styles from './Header.module.scss';
-
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
@@ -10,7 +9,7 @@ import Logo from '../../../../asset/img/logo.jpg';
 
 const cx = classNames.bind(styles);
 
-function Header({ setSearchValue }) {
+function Header({ setSearchValue, setSortOption }) {
     const [show, setShow] = useState(false);
     const [checkAdmin, setCheckAdmin] = useState(false);
 
@@ -40,9 +39,12 @@ function Header({ setSearchValue }) {
         request.get('/api/logout').then((res) => console.log(res));
     };
 
+    const handleSortChange = (e) => {
+        setSortOption(e.target.value); // setSortOption được truyền từ props
+    };
+
     return (
         <div className={cx('wrapper')}>
-            {/* Logo, tiêu đề, search và nav trên cùng một hàng */}
             <div className="d-flex align-items-center mb-2">
                 <Link to="/homepage">
                     <img style={{ width: '50px' }} src={Logo} alt="Logo UNETI" />
@@ -52,18 +54,36 @@ function Header({ setSearchValue }) {
                     <span>THƯ VIỆN ĐIỆN TỬ</span>
                 </div>
 
-                {/* Thanh Tìm Kiếm (search) và Dropdown "Cài Đặt" (nav) ở góc phải */}
                 <div className="d-flex align-items-center ms-auto" style={{ gap: '25px' }}>
                     {(window.location.pathname === '/books' || window.location.pathname === '/categories') && (
-                        <form className="d-flex">
-                            <input
-                                className="form-control me-2"
-                                type="search"
-                                placeholder="Tìm Kiếm"
-                                aria-label="Search"
-                                onChange={(e) => setSearchValue(e.target.value)}
-                            />
-                        </form>
+                        <div className="d-flex align-items-center" style={{ gap: '10px' }}>
+                            <form className="d-flex">
+                                <input
+                                    className="form-control me-2"
+                                    type="search"
+                                    placeholder="Tìm Kiếm"
+                                    aria-label="Search"
+                                    onChange={(e) => setSearchValue(e.target.value)}
+                                />
+                            </form>
+                            {window.location.pathname === '/books' && (
+                                <select
+                                    className="form-select"
+                                    style={{ width: '200px' }}
+                                    onChange={handleSortChange}
+                                    defaultValue=""
+                                >
+                                    <option value="" disabled>
+                                        Sắp xếp theo
+                                    </option>
+                                    <option value="newest">Mới nhất</option>
+                                    <option value="oldest">Cũ nhất</option>
+                                    <option value="az">A-Z</option>
+                                    <option value="za">Z-A</option>
+                                    <option value="mostBorrowed">Được mượn nhiều nhất</option>
+                                </select>
+                            )}
+                        </div>
                     )}
 
                     <ul className="navbar-nav mb-2 mb-lg-0">

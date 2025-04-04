@@ -14,6 +14,10 @@ function ListBook() {
     const [dataBooks, setDataBooks] = useState([]);
     const [searchValue, setSearchValue] = useState('');
     const debounce = useDebounce(searchValue, 500);
+    const [sortOption, setSortOption] = useState(''); // Thêm state cho sortOption
+    useEffect(() => {
+        document.title = "Danh sách sách";
+    }, []);
 
     // Gọi API /api/GetBooks để hiển thị danh sách sách ban đầu
     useEffect(() => {
@@ -64,7 +68,7 @@ function ListBook() {
     return (
         <div className={cx('wrapper')}>
             <header className={cx('header')}>
-                <Header setSearchValue={setSearchValue} />
+                <Header setSearchValue={setSearchValue} setSortOption={setSortOption} />
             </header>
 
             <div className={cx('main-container')}>
@@ -73,7 +77,12 @@ function ListBook() {
                 </aside>
 
                 <main className={cx('content')}>
-                    <MainBooks dataBooks={dataBooks} setDataBooks={setDataBooks} />
+                    <MainBooks
+                        dataBooks={dataBooks}
+                        searchQuery={searchValue}
+                        sortOption={sortOption}
+                        isMenuOpen={false}
+                    />
                 </main>
             </div>
 

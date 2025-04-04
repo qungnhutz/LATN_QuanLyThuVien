@@ -7,13 +7,17 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import useDebounce from '../../../../customHook/useDebounce';
 
 const cx = classNames.bind(styles);
 
 function HandleBook() {
-    const [borrowedBooks, setBorrowedBooks] = useState([]);
+    const [borrowedBooks, setBorrowedBooks] = useState([]); // Danh sách đầy đủ từ /api/GetBorrowedBooks
+    const [filteredBooks, setFilteredBooks] = useState([]); // Danh sách hiển thị sau khi lọc
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
+    const [searchValue, setSearchValue] = useState('');
+    const debounce = useDebounce(searchValue, 500);
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
@@ -24,26 +28,25 @@ function HandleBook() {
         return `${day}/${month}/${year}`;
     };
 
-    // Lấy dữ liệu sách đã mượn
     const fetchBorrowedBooks = async () => {
         try {
             const response = await request.get('/api/GetBorrowedBooks');
             const data = Array.isArray(response.data) ? response.data : [];
             setBorrowedBooks(data);
+            setFilteredBooks(data); // Ban đầu hiển thị toàn bộ danh sách
             setCurrentPage(1);
         } catch (err) {
             console.error('Lỗi khi lấy sách đã mượn:', err);
             setBorrowedBooks([]);
+            setFilteredBooks([]);
         }
     };
 
-    // Hàm gọi API hủy các yêu cầu mượn chưa xác nhận
     const cancelUnconfirmedBorrows = async () => {
         try {
             const response = await request.post('/api/cancelUnconfirmedBorrows');
             if (response.data.success) {
                 console.log(response.data.message);
-                // Sau khi hủy, gọi lại fetchBorrowedBooks để cập nhật danh sách
                 await fetchBorrowedBooks();
             }
         } catch (err) {
@@ -51,24 +54,79 @@ function HandleBook() {
         }
     };
 
-    // Sử dụng useEffect để gọi cả hai hàm khi component mount
+    const fetchSearchResults = async () => {
+        try {
+            if (searchValue.trim() === '') {
+                setFilteredBooks(borrowedBooks);
+                setCurrentPage(1);
+                return;
+            }
+
+            const trimmedValue = searchValue.trim();
+            // Giả định mã sinh viên bắt đầu bằng "SV" hoặc chỉ chứa số, điều chỉnh theo định dạng thực tế của bạn
+            const isStudentId = /^SV\d+$|^\d+$/.test(trimmedValue.toUpperCase());
+
+            let response;
+            if (isStudentId) {
+                console.log('Tìm kiếm theo masinhvien:', { masinhvien: trimmedValue });
+                response = await request.get('/api/SearchBorrows', {
+                    params: {
+                        masinhvien: trimmedValue,
+                        tensach: '',
+                    },
+                });
+            } else {
+                console.log('Tìm kiếm theo tensach:', { tensach: trimmedValue });
+                response = await request.get('/api/SearchBorrows', {
+                    params: {
+                        masinhvien: '',
+                        tensach: trimmedValue,
+                    },
+                });
+            }
+
+            console.log('Kết quả từ API:', response.data);
+
+            let searchData = Array.isArray(response.data.data) ? response.data.data : [];
+
+            const filtered = borrowedBooks.filter((book) =>
+                searchData.some(
+                    (searchItem) =>
+                        searchItem.maphieumuon === book.maphieumuon &&
+                        searchItem.masach === book.masach
+                )
+            );
+
+            setFilteredBooks(filtered);
+            setCurrentPage(1);
+        } catch (err) {
+            console.error('Lỗi khi tìm kiếm sách mượn:', err.response?.data || err);
+            setFilteredBooks([]);
+            toast.error(err.response?.data?.message || 'Lỗi khi tìm kiếm sách mượn!');
+        }
+    };
+
     useEffect(() => {
         const initialize = async () => {
-            await cancelUnconfirmedBorrows(); // Gọi API hủy trước
-            await fetchBorrowedBooks(); // Lấy danh sách sách mượn sau khi hủy
+            await cancelUnconfirmedBorrows();
+            await fetchBorrowedBooks();
         };
         initialize();
     }, []);
+
+    useEffect(() => {
+        fetchSearchResults();
+    }, [debounce, borrowedBooks]);
 
     const handleConfirmBorrow = async (maphieumuon) => {
         try {
             const response = await request.post('/api/confirmBorrowRequest', { maphieumuon });
             if (response.status === 200) {
-                setBorrowedBooks((prevBooks) =>
-                    prevBooks.map((book) =>
-                        book.maphieumuon === maphieumuon ? { ...book, confirm: true } : book
-                    )
+                const updatedBooks = borrowedBooks.map((book) =>
+                    book.maphieumuon === maphieumuon ? { ...book, confirm: true } : book
                 );
+                setBorrowedBooks(updatedBooks);
+                setFilteredBooks(updatedBooks);
                 toast.success('Xác nhận yêu cầu mượn sách thành công!');
                 setCurrentPage(1);
             }
@@ -87,13 +145,13 @@ function HandleBook() {
                 ngaytra,
             });
             if (response.status === 200) {
-                setBorrowedBooks((prevBooks) =>
-                    prevBooks.map((book) =>
-                        book.maphieumuon === maphieumuon
-                            ? { ...book, tinhtrang: true, ngaytra }
-                            : book
-                    )
+                const updatedBooks = borrowedBooks.map((book) =>
+                    book.maphieumuon === maphieumuon
+                        ? { ...book, tinhtrang: true, ngaytra }
+                        : book
                 );
+                setBorrowedBooks(updatedBooks);
+                setFilteredBooks(updatedBooks);
                 toast.success('Trả sách thành công!');
                 setCurrentPage(1);
             }
@@ -107,13 +165,13 @@ function HandleBook() {
         try {
             const response = await request.post('/api/ExtendBorrowing', { maphieumuon });
             if (response.status === 200) {
-                setBorrowedBooks((prevBooks) =>
-                    prevBooks.map((book) =>
-                        book.maphieumuon === maphieumuon
-                            ? { ...book, ngayhentra: response.data.newDueDate }
-                            : book
-                    )
+                const updatedBooks = borrowedBooks.map((book) =>
+                    book.maphieumuon === maphieumuon
+                        ? { ...book, ngayhentra: response.data.newDueDate }
+                        : book
                 );
+                setBorrowedBooks(updatedBooks);
+                setFilteredBooks(updatedBooks);
                 toast.success('Gia hạn thời gian mượn thành công!');
                 setCurrentPage(1);
             }
@@ -125,8 +183,8 @@ function HandleBook() {
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = borrowedBooks.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(borrowedBooks.length / itemsPerPage);
+    const currentItems = filteredBooks.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredBooks.length / itemsPerPage);
 
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
@@ -147,8 +205,20 @@ function HandleBook() {
             />
 
             <div className="row mb-4 align-items-center">
-                <div className="col-12 text-center text-md-start">
+                <div className="col-12 col-md-8 text-center text-md-start">
                     <h4 className="fw-bold mb-0">Quản Lý Sách Mượn</h4>
+                </div>
+                <div className="col-12 col-md-4">
+                    <form className="d-flex justify-content-md-end">
+                        <input
+                            className="form-control w-100 w-md-75"
+                            type="search"
+                            placeholder="Tìm mã sinh viên"
+                            aria-label="Search"
+                            value={searchValue}
+                            onChange={(e) => setSearchValue(e.target.value)}
+                        />
+                    </form>
                 </div>
             </div>
 
@@ -156,8 +226,10 @@ function HandleBook() {
                 <table className="table table-striped table-hover table-bordered align-middle">
                     <thead className="table-dark">
                     <tr>
-                        <th scope="col">Mã Phiếu Mượn</th>
+                        <th scope="col">Mã Phiếu</th>
+                        <th scope="col">Mã SV</th>
                         <th scope="col">Mã Sách</th>
+                        <th scope="col">Tên Sách</th>
                         <th scope="col">Số Lượng</th>
                         <th scope="col">Ngày Mượn</th>
                         <th scope="col">Ngày Hẹn Trả</th>
@@ -170,10 +242,12 @@ function HandleBook() {
                     <tbody>
                     {currentItems.length > 0 ? (
                         currentItems.map((book) => (
-                            <tr key={book._id}>
+                            <tr key={book.maphieumuon}>
                                 <td>{book.maphieumuon}</td>
+                                <td>{book.masinhvien}</td>
                                 <td>{book.masach}</td>
-                                <td>{book.soluong}</td>
+                                <td>{book.tensach}</td>
+                                <td>{book.soluong || 1}</td>
                                 <td>{formatDate(book.ngaymuon)}</td>
                                 <td>{formatDate(book.ngayhentra)}</td>
                                 <td className={book.quahan > 0 ? 'text-danger fw-bold' : ''}>
@@ -226,7 +300,7 @@ function HandleBook() {
                         ))
                     ) : (
                         <tr>
-                            <td colSpan="9" className="text-center">
+                            <td colSpan="10" className="text-center">
                                 Không có dữ liệu sách mượn
                             </td>
                         </tr>
@@ -235,7 +309,7 @@ function HandleBook() {
                 </table>
             </div>
 
-            {borrowedBooks.length > 0 && (
+            {filteredBooks.length > 0 && (
                 <nav aria-label="Page navigation">
                     <ul className="pagination justify-content-center mt-3">
                         <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>

@@ -1,10 +1,11 @@
 import classNames from 'classnames/bind';
 import styles from './AdminPage.module.scss';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faBook, faUsers, faExchangeAlt, faChartBar, faBars, faTimes, faHome,
-    faUserFriends, faLayerGroup, faMapMarkerAlt, faShoppingCart, faAngleDown, faAngleUp
+    faUserFriends, faLayerGroup, faMapMarkerAlt, faShoppingCart, faAngleDown, faAngleUp,
+    faTrash
 } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
 import ManagementBooks from './Layouts/ManagementBooks/ManagementBooks';
@@ -15,9 +16,10 @@ import ManagementReader from './Layouts/ManagementReader/ManagementReader';
 import ManagementCategory from './Layouts/ManagementCategory/ManagementCategory';
 import ManagementLocation from './Layouts/ManagementLocation/ManagementLocation';
 import BuyBook from './Layouts/BuyBooks/BuyBooks';
+import ReportBookInStock from './Layouts/ReportBookInStock/ReportBookInStock';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import request from '../../config/Connect';
-import ReportBookInStock from './Layouts/ReportBookInStock/ReportBookInStock';
+import ClearanceBooks from './Layouts/ClearanceBooks/ClearanceBooks';
 
 const cx = classNames.bind(styles);
 const handleLogout = () => {
@@ -27,11 +29,15 @@ const handleLogout = () => {
 function AdminPage() {
     const [checkPage, setCheckPage] = useState('1');
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-    const [openSubmenu, setOpenSubmenu] = useState(null); // State để quản lý submenu đang mở
+    const [openSubmenu, setOpenSubmenu] = useState(null);
 
     const toggleSidebar = () => {
         setIsSidebarCollapsed(!isSidebarCollapsed);
     };
+
+    useEffect(() => {
+        document.title = "Trang quản trị";
+    }, []);
 
     const toggleSubmenu = (menu) => {
         setOpenSubmenu(openSubmenu === menu ? null : menu);
@@ -75,7 +81,6 @@ function AdminPage() {
                 {/* Thanh bên */}
                 <div className={cx('sidebar', 'shadow-sm', { collapsed: isSidebarCollapsed })}>
                     <ul className="nav flex-column">
-                        {/* Tùy chọn 1: Quản lý người dùng */}
                         <li
                             className={cx('nav-item', { active: checkPage === '1' })}
                             onClick={() => setCheckPage('1')}
@@ -83,8 +88,6 @@ function AdminPage() {
                             <FontAwesomeIcon icon={faUsers} className="me-2" />
                             {!isSidebarCollapsed && 'Quản Lý Người Dùng'}
                         </li>
-
-                        {/* Tùy chọn 2: Quản lý độc giả */}
                         <li
                             className={cx('nav-item', { active: checkPage === '2' })}
                             onClick={() => setCheckPage('2')}
@@ -92,8 +95,6 @@ function AdminPage() {
                             <FontAwesomeIcon icon={faUserFriends} className="me-2" />
                             {!isSidebarCollapsed && 'Quản Lý Độc Giả'}
                         </li>
-
-                        {/* Tùy chọn 3: Quản lý kho sách (có submenu) */}
                         <li
                             className={cx('nav-item', { active: ['3', '4', '5'].includes(checkPage) })}
                             onClick={() => toggleSubmenu('inventory')}
@@ -134,8 +135,6 @@ function AdminPage() {
                                 </li>
                             </ul>
                         )}
-
-                        {/* Tùy chọn 4: Quản lý mượn trả */}
                         <li
                             className={cx('nav-item', { active: checkPage === '6' })}
                             onClick={() => setCheckPage('6')}
@@ -143,10 +142,8 @@ function AdminPage() {
                             <FontAwesomeIcon icon={faExchangeAlt} className="me-2" />
                             {!isSidebarCollapsed && 'Quản Lý Mượn Trả'}
                         </li>
-
-                        {/* Tùy chọn 5: Báo cáo thống kê (có submenu) */}
                         <li
-                            className={cx('nav-item', { active: ['7', '8', '9'].includes(checkPage) })}
+                            className={cx('nav-item', { active: ['7', '8', '9', '10'].includes(checkPage) })} // Thêm '10'
                             onClick={() => toggleSubmenu('report')}
                         >
                             <FontAwesomeIcon icon={faChartBar} className="me-2" />
@@ -183,6 +180,13 @@ function AdminPage() {
                                     <FontAwesomeIcon icon={faBook} className="me-2" />
                                     Báo Cáo Tồn Kho
                                 </li>
+                                <li
+                                    className={cx('nav-item', { active: checkPage === '10' })} // Thêm option mới
+                                    onClick={() => setCheckPage('10')}
+                                >
+                                    <FontAwesomeIcon icon={faTrash} className="me-2" />
+                                    Sách Thanh Lý
+                                </li>
                             </ul>
                         )}
                     </ul>
@@ -201,6 +205,7 @@ function AdminPage() {
                             {checkPage === '7' && <BaoCaoThongKe />}
                             {checkPage === '8' && <BuyBook />}
                             {checkPage === '9' && <ReportBookInStock />}
+                            {checkPage === '10' && <ClearanceBooks />} {/* Thêm component mới */}
                         </div>
                     </div>
                 </div>

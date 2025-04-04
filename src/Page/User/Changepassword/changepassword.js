@@ -19,6 +19,10 @@ function ChangePassword() {
     const [menuHeight, setMenuHeight] = useState(window.innerHeight - 60 - 100);
 
     useEffect(() => {
+        document.title = "Đổi mật khẩu";
+    }, []);
+
+    useEffect(() => {
         const updateMenuHeight = () => {
             const windowHeight = window.innerHeight;
             const footerRect = footerRef.current?.getBoundingClientRect();

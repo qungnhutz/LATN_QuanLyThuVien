@@ -22,6 +22,10 @@ const DetailBook = () => {
     const [showModal, setShowModal] = useState(false);
     const navigate = useNavigate(); // Hook để điều hướng
 
+    useEffect(() => {
+        document.title = "Chi tiết";
+    }, []);
+
     // Hàm định dạng ngày
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
@@ -127,7 +131,7 @@ const DetailBook = () => {
                                                 </li>
                                                 <li className="mb-2">
                                                     <strong><i className="bi bi-bookmark-fill me-2"></i>Danh mục:</strong>{' '}
-                                                    <span>{book.madanhmuc}</span>
+                                                    <span>{book.tendanhmuc}</span>
                                                 </li>
                                                 <li className="mb-2">
                                                     <strong><i className="bi bi-calendar-event me-2"></i>Năm xuất bản:</strong>{' '}
@@ -142,7 +146,7 @@ const DetailBook = () => {
                                                     <span className="badge bg-success">{book.Tongsoluong}</span>
                                                 </li>
                                                 <li className="mb-2">
-                                                    <strong><i className="bi bi-cart-check me-2"></i>Số lượng mượn:</strong>{' '}
+                                                    <strong><i className="bi bi-cart-check me-2"></i>Tổng số sách đã mượn:</strong>{' '}
                                                     <span className="badge bg-warning text-dark">
                                                         {book.vitri.reduce(
                                                             (total, v) => total + (v.soluongmuon || 0),
@@ -175,13 +179,13 @@ const DetailBook = () => {
                                                     key={index}
                                                     className="list-group-item d-flex justify-content-between align-items-center"
                                                 >
-                                                    <span>{v.mavitri}</span>
+                                                    <span>{v.mavitri} | {v.coso}</span>
                                                     <div>
                                                         <span className="badge bg-primary me-2">
-                                                            Còn: {v.soluong_con}
+                                                            Số lượng còn: {v.soluong_con}
                                                         </span>
                                                         <span className="badge bg-warning text-dark">
-                                                            Mượn: {v.soluongmuon}
+                                                            Số lượng mượn: {v.soluongmuon}
                                                         </span>
                                                     </div>
                                                 </li>

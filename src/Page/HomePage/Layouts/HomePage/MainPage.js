@@ -100,7 +100,7 @@ const bannerSliderSettings = {
 // Component: Banner Slider
 const BannerSlider = () => (
     <Slider {...bannerSliderSettings}>
-        {['/banner1.jpg', '/banner2.jpg', '/banner3.jpg','/banner.jpg','/banner4.jpg'].map((image, index) => (
+        {['/banner_1.jpg', '/banner_2.jpg', '/banner_3.jpg','/banner_4.jpg'].map((image, index) => (
             <motion.div
                 key={index}
                 initial={{ opacity: 0 }}

@@ -4,7 +4,7 @@ import Form from 'react-bootstrap/Form';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import request from '../../config/Connect';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useState, useEffect } from 'react';
 
@@ -14,41 +14,44 @@ function ModalAddClearanceBooks({ showModalAddClearanceBooks, setShowModalAddCle
     const [soluong, setSoluong] = useState('');
     const [mavitri, setMavitri] = useState('');
     const [lydo, setLydo] = useState('');
-    const [trangthai, setTrangthai] = useState(true); // Mặc định là true (đang thanh lý)
 
-    // State cho tìm kiếm vị trí
+    // State for location search
     const [locations, setLocations] = useState([]);
     const [filteredLocations, setFilteredLocations] = useState([]);
     const [locationSearchQuery, setLocationSearchQuery] = useState('');
     const [showLocationDropdown, setShowLocationDropdown] = useState(false);
     const [loadingLocations, setLoadingLocations] = useState(false);
 
-    // State cho danh sách mã sách
+    // State for book list
     const [books, setBooks] = useState([]);
     const [showBooksDropdown, setShowBooksDropdown] = useState(false);
 
     const handleClose = () => {
         setShowModalAddClearanceBooks(false);
+        resetForm();
+    };
+
+    const resetForm = () => {
         setMasachthanhly('');
         setMasach('');
         setSoluong('');
         setMavitri('');
         setLydo('');
-        setTrangthai(true);
         setLocationSearchQuery('');
         setBooks([]);
         setShowBooksDropdown(false);
+        setShowLocationDropdown(false);
     };
 
     const toastOptions = {
-        position: "top-right",
-        autoClose: 3000,
+        position: 'top-right',
+        autoClose: 2000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
         progress: undefined,
-        theme: "colored",
+        theme: 'colored',
     };
 
     useEffect(() => {
@@ -57,8 +60,9 @@ function ModalAddClearanceBooks({ showModalAddClearanceBooks, setShowModalAddCle
         }
     }, [showModalAddClearanceBooks]);
 
-    // Lấy danh sách vị trí
+    // Fetch all locations
     const fetchAllLocations = async () => {
+        setLoadingLocations(true);
         try {
             const response = await request.get('/api/getAllLocations');
             const data = response.data.data || [];
@@ -69,10 +73,12 @@ function ModalAddClearanceBooks({ showModalAddClearanceBooks, setShowModalAddCle
             toast.error('Không thể tải danh sách vị trí!', toastOptions);
             setLocations([]);
             setFilteredLocations([]);
+        } finally {
+            setLoadingLocations(false);
         }
     };
 
-    // Lọc vị trí dựa trên query
+    // Filter locations based on search query
     useEffect(() => {
         if (locationSearchQuery && locations.length > 0) {
             const filtered = locations.filter((location) =>
@@ -84,7 +90,7 @@ function ModalAddClearanceBooks({ showModalAddClearanceBooks, setShowModalAddCle
         }
     }, [locationSearchQuery, locations]);
 
-    // Lấy danh sách sách theo mã vị trí
+    // Fetch books by location
     const fetchBooksByLocation = async (mavitri) => {
         try {
             const response = await request.get('/api/getBooksByLocation', {
@@ -108,15 +114,16 @@ function ModalAddClearanceBooks({ showModalAddClearanceBooks, setShowModalAddCle
         setMavitri(location.mavitri);
         setLocationSearchQuery(location.mavitri);
         setShowLocationDropdown(false);
-        fetchBooksByLocation(location.mavitri); // Gọi API để lấy danh sách sách
+        fetchBooksByLocation(location.mavitri);
     };
 
     const handleLocationInputChange = (e) => {
         setLocationSearchQuery(e.target.value);
         setMavitri('');
         setShowLocationDropdown(true);
-        setBooks([]); // Xóa danh sách sách khi thay đổi vị trí
+        setBooks([]);
         setShowBooksDropdown(false);
+        setMasach(''); // Reset masach when location changes
     };
 
     const handleLocationInputFocus = () => {
@@ -132,26 +139,26 @@ function ModalAddClearanceBooks({ showModalAddClearanceBooks, setShowModalAddCle
         setShowBooksDropdown(false);
     };
 
+    const isFormValid = () => {
+        return masachthanhly && masach && soluong && mavitri && lydo && Number(soluong) > 0;
+    };
+
     const handleAddClearanceBook = async () => {
+        if (!isFormValid()) {
+            toast.error('Vui lòng điền đầy đủ thông tin bắt buộc!', toastOptions);
+            return;
+        }
+
         try {
-            if (!masachthanhly || !masach || !soluong || !mavitri || !lydo) {
-                toast.error('Vui lòng nhập đầy đủ thông tin!', toastOptions);
-                return;
-            }
-
-            if (masachthanhly.includes(' ')) {
-                toast.error('Mã sách thanh lý không được chứa dấu cách!', toastOptions);
-                return;
-            }
-
-            const res = await request.post('/api/addClearanceBook', {
+            const payload = {
                 masachthanhly,
                 masach,
                 soluong: Number(soluong),
                 mavitri,
                 lydo,
-                trangthai,
-            });
+            };
+
+            const res = await request.post('/api/addClearanceBook', payload);
 
             toast.success(res.data.message || 'Thêm sách thanh lý thành công!', {
                 ...toastOptions,
@@ -161,8 +168,9 @@ function ModalAddClearanceBooks({ showModalAddClearanceBooks, setShowModalAddCle
                 },
             });
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi thêm sách thanh lý!', toastOptions);
-            console.error('Error:', error);
+            const errorMessage =
+                error.response?.data?.message || 'Có lỗi xảy ra khi thêm sách thanh lý!';
+            toast.error(errorMessage, toastOptions);
         }
     };
 
@@ -186,6 +194,7 @@ function ModalAddClearanceBooks({ showModalAddClearanceBooks, setShowModalAddCle
                                         value={masachthanhly}
                                         onChange={(e) => setMasachthanhly(e.target.value)}
                                         className="shadow-sm"
+                                        required
                                     />
                                 </Form.Group>
                             </Col>
@@ -200,6 +209,7 @@ function ModalAddClearanceBooks({ showModalAddClearanceBooks, setShowModalAddCle
                                         onFocus={() => books.length > 0 && setShowBooksDropdown(true)}
                                         onBlur={() => setTimeout(() => setShowBooksDropdown(false), 200)}
                                         className="shadow-sm"
+                                        required
                                     />
                                     {showBooksDropdown && books.length > 0 && (
                                         <div
@@ -229,8 +239,12 @@ function ModalAddClearanceBooks({ showModalAddClearanceBooks, setShowModalAddCle
                                                         overflow: 'hidden',
                                                         textOverflow: 'ellipsis',
                                                     }}
-                                                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
-                                                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                                                    onMouseEnter={(e) =>
+                                                        (e.currentTarget.style.backgroundColor = '#f0f0f0')
+                                                    }
+                                                    onMouseLeave={(e) =>
+                                                        (e.currentTarget.style.backgroundColor = 'white')
+                                                    }
                                                 >
                                                     {book.masach} - {book.tensach}
                                                 </div>
@@ -249,6 +263,7 @@ function ModalAddClearanceBooks({ showModalAddClearanceBooks, setShowModalAddCle
                                         onChange={(e) => setSoluong(e.target.value)}
                                         min="1"
                                         className="shadow-sm"
+                                        required
                                     />
                                 </Form.Group>
                             </Col>
@@ -264,6 +279,7 @@ function ModalAddClearanceBooks({ showModalAddClearanceBooks, setShowModalAddCle
                                         onBlur={handleLocationInputBlur}
                                         className="shadow-sm"
                                         disabled={loadingLocations}
+                                        required
                                     />
                                     {showLocationDropdown && filteredLocations.length > 0 && (
                                         <div
@@ -293,8 +309,12 @@ function ModalAddClearanceBooks({ showModalAddClearanceBooks, setShowModalAddCle
                                                         overflow: 'hidden',
                                                         textOverflow: 'ellipsis',
                                                     }}
-                                                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
-                                                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                                                    onMouseEnter={(e) =>
+                                                        (e.currentTarget.style.backgroundColor = '#f0f0f0')
+                                                    }
+                                                    onMouseLeave={(e) =>
+                                                        (e.currentTarget.style.backgroundColor = 'white')
+                                                    }
                                                 >
                                                     {location.mavitri} - {location.coso}
                                                 </div>
@@ -312,20 +332,8 @@ function ModalAddClearanceBooks({ showModalAddClearanceBooks, setShowModalAddCle
                                         value={lydo}
                                         onChange={(e) => setLydo(e.target.value)}
                                         className="shadow-sm"
+                                        required
                                     />
-                                </Form.Group>
-                            </Col>
-                            <Col md={4}>
-                                <Form.Group controlId="formTrangthai">
-                                    <Form.Label>Trạng Thái</Form.Label>
-                                    <Form.Select
-                                        value={trangthai}
-                                        onChange={(e) => setTrangthai(e.target.value === 'true')}
-                                        className="shadow-sm"
-                                    >
-                                        <option value={true}>Đang Thanh Lý</option>
-                                        <option value={false}>Đã Thanh Lý</option>
-                                    </Form.Select>
                                 </Form.Group>
                             </Col>
                         </Row>
@@ -335,12 +343,16 @@ function ModalAddClearanceBooks({ showModalAddClearanceBooks, setShowModalAddCle
                     <Button variant="secondary" onClick={handleClose} className="px-4">
                         Đóng
                     </Button>
-                    <Button variant="primary" onClick={handleAddClearanceBook} className="px-4">
+                    <Button
+                        variant="primary"
+                        onClick={handleAddClearanceBook}
+                        className="px-4"
+                        disabled={!isFormValid()}
+                    >
                         Thêm Mới
                     </Button>
                 </Modal.Footer>
             </Modal>
-            {/*<ToastContainer />*/}
         </>
     );
 }

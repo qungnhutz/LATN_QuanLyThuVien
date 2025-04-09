@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import request from '../../../../../src/config/Connect';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 
-// Đăng ký các thành phần của Chart.js
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const Report = () => {
@@ -23,13 +22,12 @@ const Report = () => {
     const fetchBookStats = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:5000/api/getBookBorrowByMonth', {
+            const response = await request.get('api/getBookBorrowByMonth', {
                 params: { month, year }
             });
             setBookStats(response.data.data || []);
             setCurrentPage(1);
         } catch (error) {
-            console.error('Lỗi khi lấy thống kê sách:', error);
             setBookStats([]);
         } finally {
             setLoading(false);
@@ -39,8 +37,8 @@ const Report = () => {
     const handleExportExcel = async () => {
         try {
             setLoading(true);
-            const response = await axios({
-                url: 'http://localhost:5000/api/exportBookBorrow',
+            const response = await request({
+                url: '/api/exportBookBorrow',
                 method: 'GET',
                 responseType: 'blob',
                 params: { month, year }
@@ -53,7 +51,6 @@ const Report = () => {
             link.click();
             link.remove();
         } catch (error) {
-            console.error('Lỗi khi xuất Excel:', error);
         } finally {
             setLoading(false);
         }

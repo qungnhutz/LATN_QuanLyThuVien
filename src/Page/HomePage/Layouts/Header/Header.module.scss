@@ -22,4 +22,26 @@
     .form-control {
         width: 200px;
     }
+
+    // Responsive cho điện thoại
+    @media (max-width: 768px) {
+        padding: 1px; // Giảm padding
+        .title {
+            display: none; // Ẩn title trên mobile
+        }
+        .form-control {
+            width: 150px; // Giảm chiều rộng ô tìm kiếm
+        }
+        .form-select {
+            width: 150px; // Giảm chiều rộng select
+        }
+    }
+    @media (max-width: 480px) {
+        .title {
+            display: none; // Ẩn title trên mobile
+        }
+        .form-control, .form-select {
+            width: 70px; // Thu gọn hơn nữa
+        }
+    }
 }

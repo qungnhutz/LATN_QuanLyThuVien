@@ -11,7 +11,7 @@ import { useState } from 'react';
 function ModalAddUser({ showModalAddUser, setShowModalAddUser, onAddSuccess }) {
     const [hoten, setHoten] = useState('');
     const [address, setAddress] = useState('');
-    const [brithday, setBrithday] = useState('');
+    const [ngaysinh, setNgaysinh] = useState('');
     const [password, setPassword] = useState('');
     const [email, setEmail] = useState('');
     const [masinhvien, setMasinhvien] = useState('');
@@ -22,69 +22,36 @@ function ModalAddUser({ showModalAddUser, setShowModalAddUser, onAddSuccess }) {
         setShowModalAddUser(false);
         setHoten('');
         setAddress('');
-        setBrithday('');
+        setNgaysinh('');
         setPassword('');
         setEmail('');
         setMasinhvien('');
         setSdt('');
-        setTypereader('student');
-    };
-
-    const toastOptions = {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
+        setTypereader('Sinh viên');
     };
 
     const handleAddUser = async () => {
         try {
-            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-            const phoneRegex = /^\+?\d{10,15}$/;
-
-            if (!masinhvien || !password || !email) {
-                toast.error('Vui lòng nhập mã sinh viên, mật khẩu và email!', toastOptions);
-                return;
-            }
-
-            if (!dateRegex.test(brithday)) {
-                toast.error('Vui lòng chọn ngày sinh hợp lệ!', toastOptions);
-                return;
-            }
-
-            if (sdt && !phoneRegex.test(sdt)) {
-                toast.error('Số điện thoại không hợp lệ!', toastOptions);
-                return;
-            }
-
             const res = await request.post('/api/createUser', {
                 masinhvien,
                 password,
                 email,
                 hoten,
                 address,
-                brithday,
+                ngaysinh,
                 sdt,
                 typereader,
             });
-
-            toast.success(res.data.message || 'Thêm người dùng thành công!', {
-                ...toastOptions,
+            toast.success(res.data.message, {
                 onClose: () => {
                     handleClose();
-                    onAddSuccess(); // Gọi callback để refresh danh sách
+                    onAddSuccess();
                 },
             });
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi thêm người dùng!', toastOptions);
-            console.error('Error:', error);
+            toast.error(error.response?.data?.message);
         }
     };
-
     return (
         <>
             <Modal show={showModalAddUser} onHide={handleClose} size="lg">
@@ -123,8 +90,8 @@ function ModalAddUser({ showModalAddUser, setShowModalAddUser, onAddSuccess }) {
                                     <Form.Label>Ngày Sinh</Form.Label>
                                     <Form.Control
                                         type="date"
-                                        value={brithday}
-                                        onChange={(e) => setBrithday(e.target.value)}
+                                        value={ngaysinh}
+                                        onChange={(e) => setNgaysinh(e.target.value)}
                                         className="shadow-sm"
                                     />
                                 </Form.Group>

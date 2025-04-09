@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
-import request from '../../../../../config/Connect'; // Giả sử đây là cấu hình axios
+import request from '../../../../../config/Connect';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -18,7 +18,6 @@ function ModalRequestBook({ show, setShow, masach, tensach, vitri }) {
     const [mavitri, setMavitri] = useState('');
     const [locations, setLocations] = useState([]);
 
-    // Sử dụng dữ liệu vitri từ props
     useEffect(() => {
         if (show && vitri && Array.isArray(vitri)) {
             setLocations(vitri);
@@ -31,30 +30,17 @@ function ModalRequestBook({ show, setShow, masach, tensach, vitri }) {
     }, [show, vitri]);
 
     const handleRequestBook = async () => {
-        // Kiểm tra dữ liệu đầu vào
-        if (!masach || !tensach || !mavitri || !quantity || !ngaymuon) {
-            toast.error('Vui lòng nhập đầy đủ thông tin sách, vị trí và ngày mượn!');
-            return;
-        }
-
-        // Lấy token từ cookie
         const token = document.cookie
             .split('; ')
             .find(row => row.startsWith('token='))
             ?.split('=')[1];
-
-        if (!token) {
-            toast.error('Bạn chưa đăng nhập! Vui lòng đăng nhập lại.');
-            return;
-        }
-
         try {
             const res = await request.post(
-                '/api/requestborrowbook', // Đảm bảo endpoint chính xác
+                '/api/requestborrowbook',
                 {
                     masach,
                     tensach,
-                    quantity: parseInt(quantity), // Chuyển quantity thành số nguyên
+                    quantity: parseInt(quantity),
                     mavitri,
                     ngaymuon,
                 },
@@ -64,18 +50,16 @@ function ModalRequestBook({ show, setShow, masach, tensach, vitri }) {
                     },
                 }
             );
-
-            // Xử lý phản hồi từ API
             if (res.data.message === 'Mượn sách thành công !!!') {
                 toast.success('Yêu cầu mượn sách thành công!');
                 setTimeout(() => {
                     handleClose();
                 }, 2000);
             } else {
-                toast.error(res.data.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+                toast.error(res.data.message);
             }
         } catch (error) {
-            const errorMessage = error.response?.data?.message || 'Không thể gửi yêu cầu mượn sách.';
+            const errorMessage = error.response?.data?.message;
             toast.error(errorMessage);
         }
     };

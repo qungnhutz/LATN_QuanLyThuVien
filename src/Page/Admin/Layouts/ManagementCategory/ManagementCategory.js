@@ -308,7 +308,7 @@ function ManagementCategory() {
                                                     <td>{book.tacgia}</td>
                                                     <td>{book.nhaxuatban}</td>
                                                     <td>{book.namxb}</td>
-                                                    <td>{book.currentQuantity || book.soluong || 0}</td>
+                                                    <td>{book.Tongsoluong || book.soluong || 0}</td>
                                                     <td>{formatDate(book.ngaycapnhat)}</td>
                                                 </tr>
                                             ))

@@ -1,6 +1,6 @@
 import classNames from 'classnames/bind';
 import styles from './Login.module.scss';
-import { Link, useNavigate } from 'react-router-dom'; // Thêm useNavigate
+import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import request from '../../config/Connect';
 import { ToastContainer, toast } from 'react-toastify';
@@ -8,45 +8,34 @@ import 'react-toastify/dist/ReactToastify.css';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'; // Thêm icon mũi tên
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const cx = classNames.bind(styles);
 
 function Register() {
-    const [username, setUsername] = useState('');
+    const [hoten, setHoten] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [masinhvien, setMasinhvien] = useState('');
     const [address, setAddress] = useState('');
-    const [birthday, setBirthday] = useState('');
+    const [ngaysinh, setNgaysinh] = useState('');
     const [sdt, setSdt] = useState('');
     const [typereader, setTypereader] = useState('Sinh viên');
-    const navigate = useNavigate(); // Hook để điều hướng
+    const navigate = useNavigate();
 
     useEffect(() => {
         document.title = "Đăng ký";
     }, []);
 
     const handleRegister = async () => {
-        const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        try {
-            const checkEmail = emailPattern.test(email);
-            if (!checkEmail) {
-                toast.error('Email không đúng định dạng');
-                return;
-            }
-            if (!masinhvien || !password || !email) {
-                toast.error('Vui lòng nhập mã sinh viên, mật khẩu và email!');
-                return;
-            }
-
+         try {
             const res = await request.post('/api/createUser', {
                 masinhvien,
                 password,
                 email,
-                hoten: username,
+                hoten,
                 address,
-                brithday: birthday,
+                ngaysinh,
                 sdt,
                 typereader,
             });
@@ -87,7 +76,7 @@ function Register() {
                                 variant="outlined"
                                 size="medium"
                                 fullWidth
-                                onChange={(e) => setUsername(e.target.value)}
+                                onChange={(e) => setHoten(e.target.value)}
                             />
                         </div>
                         <div>
@@ -133,7 +122,7 @@ function Register() {
                                 size="medium"
                                 fullWidth
                                 InputLabelProps={{ shrink: true }}
-                                onChange={(e) => setBirthday(e.target.value)}
+                                onChange={(e) => setNgaysinh(e.target.value)}
                             />
                         </div>
                         <div>

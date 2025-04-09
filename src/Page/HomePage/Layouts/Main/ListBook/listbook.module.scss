@@ -1,7 +1,7 @@
 .wrapper {
   display: flex;
   flex-direction: column;
-  min-height: 100vh; // Đảm bảo bao phủ toàn bộ chiều cao màn hình
+  min-height: 100vh;
 }
 
 .header {
@@ -15,18 +15,18 @@
 
 .main-container {
   display: flex;
-  margin-top: 60px; // Chừa chỗ cho header
+  margin-top: 60px;
   flex: 1;
 }
 
 .menu-left {
   position: sticky;
-  top: 60px; // Cố định ở dưới header
+  top: 60px;
   left: 0;
-  height: fit-content; // Để chiều cao phù hợp với nội dung
-  max-height: calc(100vh - 60px); // Giới hạn chiều cao để không vượt quá màn hình
+  height: fit-content;
+  max-height: calc(100vh - 60px);
   background-color: #f8f9fa;
-  overflow-y: auto; // Cho phép cuộn khi nội dung dài
+  overflow-y: auto;
   z-index: 900;
   box-sizing: border-box;
 }
@@ -37,4 +37,29 @@
   padding-bottom: 50px;
   overflow-y: auto;
   box-sizing: border-box;
+}
+
+// Responsive cho điện thoại
+@media (max-width: 768px) {
+  .main-container {
+    flex-direction: column;
+  }
+  .menu-left {
+    position: relative;
+    top: 0;
+    width: 100%;
+    max-height: none;
+  }
+  .content {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 5px;
+  }
+  .content {
+    padding: 5px;
+  }
 }

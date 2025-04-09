@@ -1,12 +1,10 @@
 import classNames from 'classnames/bind';
 import styles from './Login.module.scss';
-import request, { requestLogin } from '../../config/Connect';
-
+import request  from '../../config/Connect';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
-
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
@@ -28,15 +26,12 @@ function Login() {
         if (savedPassword) setPassword(savedPassword);
     }, []);
     const handleLogin = async () => {
-        if (!masinhvien || !password) {
-            return toast.error('Vui lòng nhập đủ thông tin');
-        }
         try {
             const data = { masinhvien, password };
-            const res = await requestLogin(data);
-            toast.success(res.message);
-            if (res.token) {
-                document.cookie = `token=${res.token}; path=/`;
+            const res = await request.post('api/login', data);
+            toast.success(res.data.message);
+            if (res.data.token) {
+                document.cookie = `token=${res.data.token}; path=/`;
                 navigate('/homepage');
             }
             if (checkSaveLogin) {
@@ -74,7 +69,7 @@ function Login() {
                             variant="outlined"
                             size="medium"
                             fullWidth
-                            autoComplete="username" // Đã sửa từ `autocomplete`
+                            autoComplete="username"
                             value={masinhvien}
                             onChange={(e) => setmasinhvien(e.target.value)}
                             margin="normal"
@@ -86,7 +81,7 @@ function Login() {
                             type="password"
                             size="medium"
                             fullWidth
-                            autoComplete="current-password" // Đã sửa từ `autocomplete`
+                            autoComplete="current-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             margin="normal"

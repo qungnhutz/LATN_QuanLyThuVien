@@ -15,7 +15,7 @@ import DetailCategory from '../Page/HomePage/Layouts/Main/Categories/DetaiCatego
 import Guide from '../Page/Support/Guide/Guide';
 
 export const publicRoutes = [
-    { path: '/', element: <Login /> },
+    { path: '', element: <Login /> },
     { path: '/reg', element: <Register /> },
     { path: '/forgot', element: <Forgetpassword /> },
     { path: '/about', element: <LibraryIntro /> },

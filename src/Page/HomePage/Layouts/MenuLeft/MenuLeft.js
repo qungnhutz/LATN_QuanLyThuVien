@@ -12,7 +12,6 @@ import {
     IconButton,
     Collapse,
     Divider,
-
 } from '@mui/material';
 import {
     Home as HomeIcon,
@@ -30,7 +29,7 @@ const cx = classNames.bind(styles);
 
 function MenuLeft() {
     const location = useLocation();
-    const [open, setOpen] = useState(true);
+    const [open, setOpen] = useState(window.innerWidth > 768); // Mặc định thu gọn trên mobile
 
     const menuItems = [
         { path: '/homepage', name: 'Trang Chủ', icon: <HomeIcon /> },
@@ -80,7 +79,6 @@ function MenuLeft() {
                                 </ListItemButton>
                             </ListItem>
                         </Tooltip>
-                        {/* Thêm đường kẻ, trừ phần tử cuối */}
                         {index < menuItems.length - 1 && <Divider />}
                     </div>
                 ))}
@@ -106,7 +104,6 @@ function MenuLeft() {
                                 </ListItemButton>
                             </ListItem>
                         </Tooltip>
-                        {/* Thêm đường kẻ, trừ phần tử cuối */}
                         {index < subMenuItems.length - 1 && <Divider />}
                     </div>
                 ))}

@@ -39,7 +39,7 @@
     margin: 5px 0;
     display: flex;
     align-items: center;
-    gap: 10px; // Khoảng cách giữa icon và text
+    gap: 10px;
 
     a {
       color: #b0b0b0;
@@ -93,14 +93,14 @@
 
   // Responsive
   @media (max-width: 768px) {
-    padding: 30px 0 15px;
-
+    padding: 20px 0 10px; // Giảm padding
     .row {
       flex-direction: column;
       text-align: center;
 
       > div {
         margin-bottom: 20px;
+        min-width: unset; // Bỏ giới hạn chiều rộng tối thiểu
         &:last-child {
           margin-bottom: 0;
         }
@@ -117,8 +117,21 @@
     }
 
     .link-list li a, p a {
-      flex-direction: column; // Đưa icon lên trên text trên mobile
+      flex-direction: row;
       gap: 5px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 15px 0 5px;
+    h5 {
+      font-size: 14px;
+    }
+    p, .link-list li {
+      font-size: 12px;
+    }
+    .copyright {
+      font-size: 10px;
     }
   }
 }

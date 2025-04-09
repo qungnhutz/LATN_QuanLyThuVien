@@ -13,7 +13,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {
-    Box, Chip,
+    Chip,
     Fade,
     Paper,
     styled,
@@ -22,7 +22,8 @@ import {
     TableCell,
     TableContainer,
     TableHead,
-    TableRow, Typography,
+    TableRow,
+    Typography,
 } from '@mui/material';
 import Button from '@mui/material/Button';
 
@@ -34,15 +35,14 @@ function HistoryBook() {
     const [masinhvien, setMasinhvien] = useState('');
     const [show, setShow] = useState(false);
 
-    const handleShowModal = () => {
-        setShow(!show);
-    };
-
     const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
         borderRadius: '12px',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-        overflow: 'hidden',
+        overflowX: 'auto', // Cho phép cuộn ngang trên mobile
         background: 'linear-gradient(145deg, #ffffff, #f8f9fa)',
+        [theme.breakpoints.down('sm')]: {
+            minWidth: '100%',
+        },
     }));
 
     const StyledTableHead = styled(TableHead)(({ theme }) => ({
@@ -52,6 +52,8 @@ function HistoryBook() {
             fontWeight: 600,
             padding: theme.spacing(2),
             borderBottom: 'none',
+            fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' },
+            whiteSpace: 'nowrap',
         },
     }));
 
@@ -64,11 +66,10 @@ function HistoryBook() {
         transition: 'all 0.2s ease-in-out',
     }));
 
-    const MainLayout = styled(Box)(({ theme }) => ({
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        background: '#f5f6fa',
+    const StyledTableCell = styled(TableCell)(({ theme }) => ({
+        padding: theme.spacing(1.5),
+        fontSize: { xs: '0.7rem', sm: '0.875rem' },
+        whiteSpace: 'nowrap',
     }));
 
     useEffect(() => {
@@ -97,13 +98,12 @@ function HistoryBook() {
         if (token && masinhvien) {
             try {
                 const response = await request.get('/api/GetBorrowsByStudent', {
-                    params: { masinhvien }
+                    params: { masinhvien },
                 });
                 setDataBooks(response.data.data || []);
             } catch (error) {
-                console.error('Lỗi khi lấy dữ liệu:', error);
                 setDataBooks([]);
-                toast.error(error.response?.data?.message || 'Lỗi khi lấy danh sách phiếu mượn!');
+                // toast.error(error.response?.data?.message);
             }
         }
     };
@@ -140,41 +140,50 @@ function HistoryBook() {
                             <Table>
                                 <StyledTableHead>
                                     <TableRow>
-                                        <TableCell>Mã Phiếu</TableCell>
-                                        <TableCell>Tên Sách</TableCell>
-                                        <TableCell>Ngày Mượn</TableCell>
-                                        <TableCell>Ngày Hẹn Trả</TableCell>
-                                        <TableCell>Ngày Trả</TableCell>
-                                        <TableCell>Quá Hạn</TableCell>
-                                        <TableCell>Tình Trạng</TableCell>
-                                        <TableCell>Hành Động</TableCell>
+                                        <StyledTableCell>Mã Phiếu</StyledTableCell>
+                                        <StyledTableCell>Tên Sách</StyledTableCell>
+                                        <StyledTableCell>Ngày Mượn</StyledTableCell>
+                                        <StyledTableCell>Ngày Hẹn Trả</StyledTableCell>
+                                        <StyledTableCell>Ngày Trả</StyledTableCell>
+                                        <StyledTableCell>Quá Hạn</StyledTableCell>
+                                        <StyledTableCell>Tình Trạng</StyledTableCell>
+                                        <StyledTableCell>Hành Động</StyledTableCell>
                                     </TableRow>
                                 </StyledTableHead>
                                 <TableBody>
                                     {dataBooks.map((item, index) => {
                                         const ngayHenTra = new Date(item.ngayhentra);
                                         const today = new Date();
-                                        const quahan = Math.max(0, Math.floor((today - ngayHenTra) / (1000 * 60 * 60 * 24)));
+                                        const quahan = Math.max(
+                                            0,
+                                            Math.floor((today - ngayHenTra) / (1000 * 60 * 60 * 24))
+                                        );
 
                                         return (
                                             <Fade in timeout={400 + index * 100} key={index}>
                                                 <StyledTableRow>
-                                                    <TableCell>{item?.maphieumuon || 'N/A'}</TableCell>
-                                                    <TableCell>{item?.tensach || 'N/A'}</TableCell>
-                                                    <TableCell>{formatDate(item?.ngaymuon)}</TableCell>
-                                                    <TableCell>{formatDate(item?.ngayhentra)}</TableCell>
-                                                    <TableCell>
+                                                    <StyledTableCell>{item?.maphieumuon || 'N/A'}</StyledTableCell>
+                                                    <StyledTableCell>{item?.tensach || 'N/A'}</StyledTableCell>
+                                                    <StyledTableCell>{formatDate(item?.ngaymuon)}</StyledTableCell>
+                                                    <StyledTableCell>{formatDate(item?.ngayhentra)}</StyledTableCell>
+                                                    <StyledTableCell>
                                                         {item?.ngaytra ? formatDate(item.ngaytra) : 'Chưa trả'}
-                                                    </TableCell>
-                                                    <TableCell>
+                                                    </StyledTableCell>
+                                                    <StyledTableCell>
                                                         {quahan > 0 && !item.tinhtrang ? (
-                                                            <Chip label={`${quahan} ngày`} color="error" size="small" />
+                                                            <Chip
+                                                                label={`${quahan} ngày`}
+                                                                color="error"
+                                                                size="small"
+                                                            />
                                                         ) : (
                                                             'Không'
                                                         )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {item.tinhtrang === true || item.tinhtrang === 1 || item.tinhtrang === '1' ? (
+                                                    </StyledTableCell>
+                                                    <StyledTableCell>
+                                                        {item.tinhtrang === true ||
+                                                        item.tinhtrang === 1 ||
+                                                        item.tinhtrang === '1' ? (
                                                             <Chip
                                                                 icon={<FontAwesomeIcon icon={faCheck} />}
                                                                 label="Đã trả"
@@ -183,14 +192,19 @@ function HistoryBook() {
                                                             />
                                                         ) : (
                                                             <Chip
-                                                                icon={<FontAwesomeIcon icon={faSpinner} className="fa-spin" />}
+                                                                icon={
+                                                                    <FontAwesomeIcon
+                                                                        icon={faSpinner}
+                                                                        className="fa-spin"
+                                                                    />
+                                                                }
                                                                 label="Đang mượn"
                                                                 color="warning"
                                                                 size="small"
                                                             />
                                                         )}
-                                                    </TableCell>
-                                                    <TableCell>
+                                                    </StyledTableCell>
+                                                    <StyledTableCell>
                                                         {!item?.tinhtrang && !item?.giahan ? (
                                                             <Button
                                                                 variant="contained"
@@ -200,6 +214,8 @@ function HistoryBook() {
                                                                     borderRadius: 20,
                                                                     textTransform: 'none',
                                                                     background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                                                                    fontSize: { xs: '0.7rem', sm: '0.875rem' },
+                                                                    padding: { xs: '4px 8px', sm: '6px 12px' },
                                                                     '&:hover': {
                                                                         transform: 'scale(1.05)',
                                                                         transition: 'all 0.2s',
@@ -209,11 +225,15 @@ function HistoryBook() {
                                                                 Gia Hạn
                                                             </Button>
                                                         ) : item?.giahan && !item?.tinhtrang ? (
-                                                            <Typography variant="body2" color="text.secondary">
+                                                            <Typography
+                                                                variant="body2"
+                                                                color="text.secondary"
+                                                                sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}
+                                                            >
                                                                 Đã gia hạn
                                                             </Typography>
                                                         ) : null}
-                                                    </TableCell>
+                                                    </StyledTableCell>
                                                 </StyledTableRow>
                                             </Fade>
                                         );

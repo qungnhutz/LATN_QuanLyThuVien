@@ -67,14 +67,13 @@ function ManagementUser() {
         }
     };
 
-    // Fetch tất cả users khi load trang hoặc sau khi thêm/sửa/xóa
     useEffect(() => {
         request.get('/api/getAllUsers')
             .then((res) => {
                 setDataUser(res.data);
-                setCurrentPage(1); // Reset về trang đầu khi dữ liệu thay đổi
+                // setCurrentPage(1);
             })
-            .catch((error) => console.error('Error fetching users:', error));
+            .catch((error) => console.error(error));
     }, [shouldRefresh]);
 
     // Xử lý tìm kiếm theo mã sinh viên

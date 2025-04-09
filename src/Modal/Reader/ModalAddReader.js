@@ -11,7 +11,7 @@ import { useState } from 'react';
 function ModalAddReader({ showModalAddReader, setShowModalAddReader, onAddSuccess }) {
     const [hoten, setHoten] = useState('');
     const [address, setAddress] = useState('');
-    const [brithday, setBrithday] = useState('');
+    const [ngaysinh, setNgaysinh] = useState('');
     const [email, setEmail] = useState('');
     const [masinhvien, setMasinhvien] = useState('');
     const [sdt, setSdt] = useState('');
@@ -21,7 +21,7 @@ function ModalAddReader({ showModalAddReader, setShowModalAddReader, onAddSucces
         setShowModalAddReader(false);
         setHoten('');
         setAddress('');
-        setBrithday('');
+        setNgaysinh('');
         setEmail('');
         setMasinhvien('');
         setSdt('');
@@ -41,45 +41,11 @@ function ModalAddReader({ showModalAddReader, setShowModalAddReader, onAddSucces
 
     const handleAddReader = async () => {
         try {
-            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-            const phoneRegex = /^(?:\+84|0)(3|5|7|8|9)[0-9]{8}$/; // Định dạng số điện thoại Việt Nam
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-            // Kiểm tra bắt buộc nhập đủ thông tin
-            if (!masinhvien || !hoten || !email || !address || !brithday || !sdt || !typereader) {
-                toast.error('Vui lòng nhập đầy đủ thông tin!', toastOptions);
-                return;
-            }
-
-            // Kiểm tra mã sinh viên không chứa dấu cách
-            if (masinhvien.includes(' ')) {
-                toast.error('Mã sinh viên không được chứa dấu cách!', toastOptions);
-                return;
-            }
-
-            // Kiểm tra định dạng ngày sinh
-            if (!dateRegex.test(brithday)) {
-                toast.error('Vui lòng chọn ngày sinh hợp lệ!', toastOptions);
-                return;
-            }
-
-            // Kiểm tra định dạng email
-            if (!emailRegex.test(email)) {
-                toast.error('Email không đúng định dạng!', toastOptions);
-                return;
-            }
-
-            // Kiểm tra định dạng số điện thoại
-            if (!phoneRegex.test(sdt)) {
-                toast.error('Số điện thoại không hợp lệ! Vui lòng nhập số Việt Nam (VD: 0987654321)', toastOptions);
-                return;
-            }
-
             const res = await request.post('/api/addReader', {
                 masinhvien,
                 hoten,
                 address,
-                brithday,
+                ngaysinh,
                 sdt,
                 email,
                 typereader,
@@ -89,7 +55,7 @@ function ModalAddReader({ showModalAddReader, setShowModalAddReader, onAddSucces
                 ...toastOptions,
                 onClose: () => {
                     handleClose();
-                    onAddSuccess(); // Gọi callback để refresh danh sách
+                    onAddSuccess();
                 },
             });
         } catch (error) {
@@ -136,8 +102,8 @@ function ModalAddReader({ showModalAddReader, setShowModalAddReader, onAddSucces
                                     <Form.Label>Ngày Sinh</Form.Label>
                                     <Form.Control
                                         type="date"
-                                        value={brithday}
-                                        onChange={(e) => setBrithday(e.target.value)}
+                                        value={ngaysinh}
+                                        onChange={(e) => setNgaysinh(e.target.value)}
                                         className="shadow-sm"
                                     />
                                 </Form.Group>

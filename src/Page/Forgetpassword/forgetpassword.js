@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { requestOTP, requestverity_OTP } from '../../config/Connect';
+import request from '../../config/Connect';
 
 const cx = classNames.bind(styles);
 
@@ -29,8 +29,8 @@ function ForgotPassword() {
         setIsLoading(true);
         setErrorMessage('');
         try {
-            const res = await requestOTP({ masinhvien, email });
-            if (res.status === 200) {
+            const res = await request.post('/api/sendOTP', { masinhvien, email });
+            if (res.data.status === 200) {
                 setCheckStatus(true);
                 toast.success('OTP đã được gửi đến email của bạn!');
             } else {
@@ -46,8 +46,8 @@ function ForgotPassword() {
         setIsLoading(true);
         setErrorMessage('');
         try {
-            const res = await requestverity_OTP({ masinhvien, newPassword, otp });
-            if (res.status === 200) {
+            const res = await request.post('/api/verifyOTP', { masinhvien, otp, newPassword });
+            if (res.data.status === 200) {
                 toast.success('Đổi mật khẩu thành công!');
                 navigate('/');
             } else {
@@ -58,7 +58,6 @@ function ForgotPassword() {
         }
         setIsLoading(false);
     };
-
     return (
         <div className={cx('wrapper')}>
             <div className={cx('inner')}>

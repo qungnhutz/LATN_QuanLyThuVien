@@ -12,22 +12,19 @@ function ReportBookInStock() {
     const [booksInStock, setBooksInStock] = useState([]);
     const [shouldRefresh, setShouldRefresh] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10); // Số lượng mục mỗi trang
+    const [itemsPerPage] = useState(10);
 
-    // Fetch danh sách sách tồn kho
     useEffect(() => {
         request.get('/api/GetBooksInStock')
             .then((res) => {
                 setBooksInStock(res.data);
-                setCurrentPage(1); // Reset về trang đầu khi dữ liệu thay đổi
+                // setCurrentPage(1);
             })
             .catch((error) => {
-                console.error('Lỗi khi lấy danh sách sách tồn kho:', error);
                 toast.error('Không thể tải danh sách sách tồn kho!', { autoClose: 3000 });
             });
     }, [shouldRefresh]);
 
-    // Tính toán dữ liệu hiển thị cho trang hiện tại
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = booksInStock.slice(indexOfFirstItem, indexOfLastItem);
@@ -44,8 +41,6 @@ function ReportBookInStock() {
             const response = await request.get('/api/exportBooksInStock', {
                 responseType: 'blob', // Để nhận file dưới dạng blob
             });
-
-            // Tạo URL tải file từ blob
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
@@ -53,14 +48,11 @@ function ReportBookInStock() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-
             toast.success('Xuất file Excel thành công!', { autoClose: 3000 });
         } catch (error) {
-            console.error('Lỗi khi xuất file Excel:', error);
             toast.error('Lỗi khi xuất file Excel!', { autoClose: 3000 });
         }
     };
-
     return (
         <div className={cx('wrapper')}>
             <ToastContainer />

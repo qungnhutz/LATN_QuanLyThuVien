@@ -14,54 +14,33 @@ function ListBook() {
     const [dataBooks, setDataBooks] = useState([]);
     const [searchValue, setSearchValue] = useState('');
     const debounce = useDebounce(searchValue, 500);
-    const [sortOption, setSortOption] = useState(''); // Thêm state cho sortOption
+    const [sortOption, setSortOption] = useState('');
+
     useEffect(() => {
         document.title = "Danh sách sách";
-    }, []);
-
-    // Gọi API /api/GetBooks để hiển thị danh sách sách ban đầu
-    useEffect(() => {
         request
             .get('/api/GetBooks')
             .then((res) => {
                 setDataBooks(res.data);
-                console.log('Danh sách sách từ /api/GetBooks:', res.data);
             })
-            .catch((error) => console.error('Lỗi khi lấy sách:', error));
+            .catch((error) => console.error(error));
     }, []);
-
-    // Tìm kiếm sách bằng API /api/SearchProduct
     useEffect(() => {
         const fetchSearchResults = async () => {
             try {
                 if (searchValue.trim() === '') {
-                    // Nếu không có từ khóa, lấy toàn bộ danh sách sách từ /api/GetBooks
                     const res = await request.get('/api/GetBooks');
                     setDataBooks(res.data);
                     return;
                 }
-
-                // Gọi API tìm kiếm với từ khóa
                 const res = await request.get('/api/SearchProduct', {
-                    params: { tensach: debounce }, // Sửa tham số thành tensach
+                    params: { tensach: debounce },
                 });
-                setDataBooks(res.data); // Dữ liệu đã được định dạng từ backend
-                console.log('Kết quả tìm kiếm từ /api/SearchProduct:', res.data);
+                setDataBooks(res.data);
             } catch (error) {
-                console.error('Lỗi khi tìm kiếm:', error);
-                if (error.response?.status === 400) {
-                    console.log('Thông báo từ server:', error.response.data.message); // "Vui lòng nhập từ khóa tìm kiếm!"
-                    setDataBooks([]);
-                } else if (error.response?.status === 404) {
-                    console.log('Thông báo từ server:', error.response.data.message); // "Không tìm thấy sách !!!"
-                    setDataBooks([]);
-                } else {
-                    console.error('Lỗi server:', error.response?.data?.message || 'Lỗi không xác định');
-                    setDataBooks([]);
-                }
+
             }
         };
-
         fetchSearchResults();
     }, [debounce]);
 

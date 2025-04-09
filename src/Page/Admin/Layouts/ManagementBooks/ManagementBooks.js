@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import ModalAddBook from '../../../../Modal/Books/ModalAddBook';
 import ModalEditBook from '../../../../Modal/Books/ModalEditBook';
 import ModalDeleteBook from '../../../../Modal/Books/ModalDeleteBook';
+import DetailBookModal from '../../../../Modal/Books/ModalDetailBook'; // Import DetailBookModal
 import request from '../../../../config/Connect';
 import useDebounce from '../../../../customHook/useDebounce';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -14,8 +15,10 @@ function ManagementBooks() {
     const [showModalAddBook, setShowModalAddBook] = useState(false);
     const [showModalEditBook, setShowModalEditBook] = useState(false);
     const [showModalDeleteBook, setShowModalDeleteBook] = useState(false);
+    const [showDetailModal, setShowDetailModal] = useState(false);
     const [idBook, setIdBook] = useState('');
     const [masachBook, setMasachBook] = useState('');
+    const [selectedMasach, setSelectedMasach] = useState('');
     const [dataBooks, setDataBooks] = useState([]);
     const [searchValue, setSearchValue] = useState('');
     const debounce = useDebounce(searchValue, 500);
@@ -54,7 +57,7 @@ function ManagementBooks() {
                 }
 
                 const res = await request.get('/api/SearchProduct', {
-                    params: { tensach: debounce }, // Sửa thành tensach để khớp với backend
+                    params: { tensach: debounce },
                 });
 
                 setDataBooks(res.data);
@@ -99,6 +102,16 @@ function ManagementBooks() {
         console.log('Mã sách được chọn để xóa:', masach);
         setMasachBook(masach);
         setShowModalDeleteBook(true);
+    };
+
+    const handleShowDetail = (masach) => {
+        setSelectedMasach(masach);
+        setShowDetailModal(true);
+    };
+
+    const handleCloseDetail = () => {
+        setShowDetailModal(false);
+        setSelectedMasach('');
     };
 
     return (
@@ -162,6 +175,12 @@ function ManagementBooks() {
                                     <td>{formatDate(item.ngaycapnhat)}</td>
                                     <td>
                                         <div className="d-flex gap-2 justify-content-center">
+                                            <button
+                                                onClick={() => handleShowDetail(item.masach)}
+                                                className="btn btn-info btn-sm"
+                                            >
+                                                <i className="bi bi-eye me-1"></i> Xem
+                                            </button>
                                             <button
                                                 onClick={() => handleShow1(item.masach)}
                                                 className="btn btn-warning btn-sm"
@@ -238,6 +257,11 @@ function ManagementBooks() {
                 showModalDeleteBook={showModalDeleteBook}
                 setShowModalDeleteBook={setShowModalDeleteBook}
                 masach={masachBook}
+            />
+            <DetailBookModal
+                open={showDetailModal}
+                onClose={handleCloseDetail}
+                masach={selectedMasach} // Truyền masach từ selectedMasach
             />
         </div>
     );

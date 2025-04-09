@@ -2,17 +2,20 @@
     width: 100%;
     height: 100vh;
     background: rgba(51, 231, 255, 0.22);
+    display: flex; /* Thêm flex để căn giữa nội dung */
+    justify-content: center;
+    align-items: center;
 }
-
 
 .inner {
     width: 90%;
     height: 100%;
-    margin: 0px auto;
+    margin: 0 auto;
     display: grid;
     grid-template-columns: 50% 50%;
     align-items: center;
 }
+
 .column-left {
     display: flex;
     flex-direction: column;
@@ -60,7 +63,6 @@
     gap: 20px; /* Khoảng cách giữa các cột và hàng */
     align-items: center;
 
-
     h1 {
         font-size: 40px;
         font-weight: 700;
@@ -93,6 +95,7 @@
 .column-right > a {
     text-align: center;
 }
+
 .forgot-password {
     color: #00acee;
     font-weight: 600;
@@ -126,5 +129,84 @@
     }
     100% {
         transform: scale(1);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .inner {
+        grid-template-columns: 100%; /* Chuyển sang 1 cột trên mobile */
+        height: auto;
+        padding: 20px 0;
+    }
+
+    .column-left {
+        justify-content: center;
+        .text-container {
+            h1 {
+                font-size: 32px; /* Giảm kích thước chữ trên mobile */
+            }
+            h2 {
+                font-size: 16px;
+            }
+        }
+        .animated-image {
+            width: 70%; /* Giảm kích thước ảnh */
+        }
+    }
+
+    .column-right {
+        width: 95%; /* Tăng chiều rộng để vừa màn hình */
+        padding: 30px; /* Giảm padding */
+        grid-template-columns: 1fr; /* Chuyển về 1 cột trên mobile */
+        gap: 15px; /* Giảm khoảng cách giữa các phần tử */
+
+        h1 {
+            font-size: 28px; /* Giảm kích thước chữ */
+        }
+        span {
+            font-size: 14px;
+        }
+    }
+
+    .remember-me {
+        flex-direction: column; /* Chuyển sang dạng cột */
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .column-left {
+        .text-container {
+            h1 {
+                font-size: 24px;
+            }
+            h2 {
+                font-size: 14px;
+            }
+        }
+        .animated-image {
+            width: 60%;
+        }
+    }
+
+    .column-right {
+        width: 100%; /* Chiếm toàn bộ chiều rộng */
+        padding: 20px;
+        h1 {
+            font-size: 24px;
+        }
+        span {
+            font-size: 12px;
+        }
+    }
+
+    .forgot-password {
+        font-size: 14px;
+    }
+
+    .remember-me {
+        gap: 8px;
     }
 }

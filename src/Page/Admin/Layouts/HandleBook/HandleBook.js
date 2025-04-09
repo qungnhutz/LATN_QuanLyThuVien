@@ -12,8 +12,8 @@ import useDebounce from '../../../../customHook/useDebounce';
 const cx = classNames.bind(styles);
 
 function HandleBook() {
-    const [borrowedBooks, setBorrowedBooks] = useState([]); // Danh sách đầy đủ từ /api/GetBorrowedBooks
-    const [filteredBooks, setFilteredBooks] = useState([]); // Danh sách hiển thị sau khi lọc
+    const [borrowedBooks, setBorrowedBooks] = useState([]);
+    const [filteredBooks, setFilteredBooks] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
     const [searchValue, setSearchValue] = useState('');
@@ -33,7 +33,7 @@ function HandleBook() {
             const response = await request.get('/api/GetBorrowedBooks');
             const data = Array.isArray(response.data) ? response.data : [];
             setBorrowedBooks(data);
-            setFilteredBooks(data); // Ban đầu hiển thị toàn bộ danh sách
+            setFilteredBooks(data);
             setCurrentPage(1);
         } catch (err) {
             console.error('Lỗi khi lấy sách đã mượn:', err);
@@ -46,11 +46,9 @@ function HandleBook() {
         try {
             const response = await request.post('/api/cancelUnconfirmedBorrows');
             if (response.data.success) {
-                console.log(response.data.message);
                 await fetchBorrowedBooks();
             }
         } catch (err) {
-            console.error('Lỗi khi hủy yêu cầu mượn chưa xác nhận:', err.response?.data || err);
         }
     };
 
@@ -61,10 +59,8 @@ function HandleBook() {
                 setCurrentPage(1);
                 return;
             }
-
             const trimmedValue = searchValue.trim();
-            // Giả định mã sinh viên bắt đầu bằng "SV" hoặc chỉ chứa số, điều chỉnh theo định dạng thực tế của bạn
-            const isStudentId = /^SV\d+$|^\d+$/.test(trimmedValue.toUpperCase());
+            const isStudentId = /^SV\d+$|^GV\d+$|^\d+$/.test(trimmedValue.toUpperCase());
 
             let response;
             if (isStudentId) {
@@ -76,7 +72,6 @@ function HandleBook() {
                     },
                 });
             } else {
-                console.log('Tìm kiếm theo tensach:', { tensach: trimmedValue });
                 response = await request.get('/api/SearchBorrows', {
                     params: {
                         masinhvien: '',
@@ -84,11 +79,7 @@ function HandleBook() {
                     },
                 });
             }
-
-            console.log('Kết quả từ API:', response.data);
-
             let searchData = Array.isArray(response.data.data) ? response.data.data : [];
-
             const filtered = borrowedBooks.filter((book) =>
                 searchData.some(
                     (searchItem) =>
@@ -100,9 +91,7 @@ function HandleBook() {
             setFilteredBooks(filtered);
             setCurrentPage(1);
         } catch (err) {
-            console.error('Lỗi khi tìm kiếm sách mượn:', err.response?.data || err);
             setFilteredBooks([]);
-            toast.error(err.response?.data?.message || 'Lỗi khi tìm kiếm sách mượn!');
         }
     };
 
@@ -153,11 +142,10 @@ function HandleBook() {
                 setBorrowedBooks(updatedBooks);
                 setFilteredBooks(updatedBooks);
                 toast.success('Trả sách thành công!');
-                setCurrentPage(1);
+                // setCurrentPage(1);
             }
         } catch (err) {
-            console.error('Lỗi khi trả sách:', err.response?.data || err);
-            toast.error(err.response?.data?.message || 'Lỗi khi trả sách!');
+            toast.error(err.response?.data?.message);
         }
     };
 
@@ -173,11 +161,10 @@ function HandleBook() {
                 setBorrowedBooks(updatedBooks);
                 setFilteredBooks(updatedBooks);
                 toast.success('Gia hạn thời gian mượn thành công!');
-                setCurrentPage(1);
+                //setCurrentPage(1);
             }
         } catch (err) {
-            console.error('Lỗi khi gia hạn:', err.response?.data || err);
-            toast.error(err.response?.data?.message || 'Lỗi khi gia hạn thời gian mượn!');
+            toast.error(err.response?.data?.message);
         }
     };
 
@@ -194,7 +181,7 @@ function HandleBook() {
         <div className="container my-4">
             <ToastContainer
                 position="top-right"
-                autoClose={3000}
+                autoClose={1000}
                 hideProgressBar={false}
                 newestOnTop={false}
                 closeOnClick

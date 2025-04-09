@@ -13,13 +13,22 @@ const cx = classNames.bind(styles);
 
 const toastOptions = {
     position: 'top-right',
-    autoClose: 3000,
+    autoClose: 1000,
     hideProgressBar: false,
     closeOnClick: true,
     pauseOnHover: true,
     draggable: true,
     progress: undefined,
     theme: 'colored',
+};
+
+const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
 };
 
 function ClearanceBooks() {
@@ -33,23 +42,22 @@ function ClearanceBooks() {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
     const [shouldRefresh, setShouldRefresh] = useState(false);
+    const [month, setMonth] = useState(new Date().getMonth() + 1); // Thêm state cho tháng
+    const [year, setYear] = useState(new Date().getFullYear()); // Thêm state cho năm
 
     const fetchClearanceBooks = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await request.get('/api/getAllClearanceBooks');
-            setDataClearanceBooks(res.data.clearanceBooks || []);
-            setCurrentPage(1);
-        } catch (error) {
-            console.error('Lỗi khi lấy danh sách sách thanh lý:', error);
-            toast.error(error.response?.data?.message || 'Lỗi khi lấy danh sách sách thanh lý!', {
-                ...toastOptions,
-                toastId: 'fetch-error',
+            const res = await request.get('/api/getAllClearanceBooks', {
+                params: { month, year }
             });
+            setDataClearanceBooks(res.data.clearanceBooks || []);
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Lỗi khi tải dữ liệu!', toastOptions);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [month, year]);
 
     useEffect(() => {
         fetchClearanceBooks();
@@ -58,75 +66,39 @@ function ClearanceBooks() {
     const handleExportClearanceBooks = async () => {
         setLoading(true);
         try {
-            const res = await request.get('/api/exportClearanceBooks', { responseType: 'blob' });
+            const res = await request.get('/api/exportClearanceBooks', {
+                responseType: 'blob',
+                params: { month, year }
+            });
             const url = window.URL.createObjectURL(new Blob([res.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', 'danhsach_thanhly.xlsx');
+            link.setAttribute('download', `danhsach_thanhly_${month}_${year}.xlsx`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             toast.success('Xuất file Excel thành công!', toastOptions);
         } catch (error) {
-            console.error('Lỗi khi xuất file:', error);
             toast.error(error.response?.data?.message || 'Lỗi khi xuất file Excel!', toastOptions);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDeleteAllClearanceBooks = () => {
-        const toastId = 'delete-all-confirm';
-        if (toast.isActive(toastId)) {
-            return;
+    const handleChangeStatus = async (masachthanhly) => {
+        setLoading(true);
+        try {
+            const res = await request.post('/api/changeClearanceBookStatus', {
+                masachthanhly,
+                trangthai: true,
+            });
+            toast.success(res.data.message, toastOptions);
+            setShouldRefresh(prev => !prev);
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Lỗi khi thay đổi trạng thái!', toastOptions);
+        } finally {
+            setLoading(false);
         }
-
-        toast(
-            <div>
-                <p>Bạn có chắc chắn muốn xóa toàn bộ danh sách sách thanh lý không?</p>
-                <div className="mt-2 d-flex justify-content-center gap-2">
-                    <button
-                        className="btn btn-danger btn-sm"
-                        onClick={async () => {
-                            setLoading(true);
-                            try {
-                                const res = await request.delete('/api/deleteAllClearanceBooks');
-                                console.log('API response:', res.data);
-                                toast.success(res.data.message || 'Xóa toàn bộ danh sách thành công!', toastOptions);
-                                setDataClearanceBooks([]);
-                                setCurrentPage(1);
-                                setShouldRefresh(prev => !prev);
-                                // fetchClearanceBooks();
-                            } catch (error) {
-                                console.error('Lỗi khi xóa toàn bộ:', error);
-                                toast.error(error.response?.data?.message || 'Lỗi khi xóa toàn bộ danh sách!', {
-                                    ...toastOptions,
-                                    toastId: 'delete-all-error',
-                                });
-                            } finally {
-                                setLoading(false);
-                                toast.dismiss(toastId);
-                            }
-                        }}
-                    >
-                        Xóa
-                    </button>
-                    <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => toast.dismiss(toastId)}
-                    >
-                        Hủy
-                    </button>
-                </div>
-            </div>,
-            {
-                ...toastOptions,
-                autoClose: false,
-                closeButton: false,
-                closeOnClick: false,
-                toastId: toastId,
-            }
-        );
     };
 
     const handleShowAdd = () => setShowModalAddClearanceBooks(true);
@@ -144,7 +116,7 @@ function ClearanceBooks() {
     };
 
     const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage; // Sửa lỗi typo
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = dataClearanceBooks.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(dataClearanceBooks.length / itemsPerPage);
 
@@ -161,13 +133,39 @@ function ClearanceBooks() {
                         <h4 className="mb-0 fw-bold">Quản Lý Sách Thanh Lý</h4>
                     </div>
                     <div className="col-12 col-md-6 text-center text-md-end">
-                        <div className="d-flex justify-content-end gap-2">
+                        <div className="d-flex justify-content-end gap-2 align-items-center">
+                            {/* Nút chọn tháng */}
+                            <select
+                                className="form-select shadow-sm"
+                                value={month}
+                                onChange={(e) => setMonth(e.target.value)}
+                                style={{ width: 'auto', borderRadius: '8px' }}
+                            >
+                                {Array.from({ length: 12 }, (_, i) => (
+                                    <option key={i + 1} value={i + 1}>
+                                        Tháng {i + 1}
+                                    </option>
+                                ))}
+                            </select>
+                            {/* Nút chọn năm */}
+                            <select
+                                className="form-select shadow-sm"
+                                value={year}
+                                onChange={(e) => setYear(e.target.value)}
+                                style={{ width: 'auto', borderRadius: '8px' }}
+                            >
+                                {Array.from({ length: 10 }, (_, i) => (
+                                    <option key={i} value={new Date().getFullYear() - i}>
+                                        {new Date().getFullYear() - i}
+                                    </option>
+                                ))}
+                            </select>
                             <button
                                 onClick={handleShowAdd}
                                 className="btn btn-primary px-4 flex-fill flex-md-grow-0"
                                 disabled={loading}
                             >
-                                <i className="bi bi-plus-lg me-2"></i>Thêm Sách
+                                <i className="bi bi-plus-lg me-2"></i>Thêm
                             </button>
                             <button
                                 onClick={handleExportClearanceBooks}
@@ -175,13 +173,6 @@ function ClearanceBooks() {
                                 disabled={loading}
                             >
                                 <i className="bi bi-file-earmark-excel me-2"></i>Xuất Excel
-                            </button>
-                            <button
-                                onClick={handleDeleteAllClearanceBooks}
-                                className="btn btn-danger px-4 flex-fill flex-md-grow-0"
-                                disabled={loading || dataClearanceBooks.length === 0}
-                            >
-                                <i className="bi bi-trash me-2"></i>Xóa Tất Cả
                             </button>
                         </div>
                     </div>
@@ -200,12 +191,13 @@ function ClearanceBooks() {
                         <table className="table table-striped table-hover table-bordered align-middle">
                             <thead className="table-dark">
                             <tr>
-                                <th scope="col">Mã Sách Thanh Lý</th>
+                                <th scope="col">Mã Thanh Lý</th>
                                 <th scope="col">Mã Sách</th>
                                 <th scope="col">Số Lượng</th>
                                 <th scope="col">Cơ Sở</th>
                                 <th scope="col">Mã Vị Trí</th>
                                 <th scope="col">Lý Do</th>
+                                <th scope="col">Ngày Cập Nhập</th>
                                 <th scope="col">Trạng Thái</th>
                                 <th scope="col">Hành Động</th>
                             </tr>
@@ -220,22 +212,30 @@ function ClearanceBooks() {
                                         <td>{item.coso}</td>
                                         <td>{item.mavitri}</td>
                                         <td>{item.lydo}</td>
-                                        <td>{item.trangthai ? 'Đang Thanh Lý' : 'Đã Thanh Lý'}</td>
+                                        <td>{formatDate(item.ngaycapnhat)}</td>
+                                        <td>{item.trangthai ? 'Đã Thanh Lý' : 'Đang Thanh Lý'}</td>
                                         <td>
-                                            <div className="d-flex gap-2 justify-content-center">
+                                            <div className="d-flex gap-2 justify-content-center flex-wrap">
                                                 <button
                                                     onClick={() => handleShowEdit(item)}
                                                     className="btn btn-warning btn-sm"
-                                                    disabled={loading}
+                                                    disabled={loading || item.trangthai}
                                                 >
                                                     <i className="bi bi-pencil me-1"></i> Sửa
                                                 </button>
                                                 <button
                                                     onClick={() => handleShowDelete(item.masachthanhly)}
                                                     className="btn btn-danger btn-sm"
-                                                    disabled={loading}
+                                                    // disabled={loading || item.trangthai}
                                                 >
                                                     <i className="bi bi-trash me-1"></i> Xóa
+                                                </button>
+                                                <button
+                                                    onClick={() => handleChangeStatus(item.masachthanhly)}
+                                                    className="btn btn-info btn-sm"
+                                                    disabled={loading || item.trangthai}
+                                                >
+                                                    <i className="bi bi-check-circle me-1"></i> Thanh Lý
                                                 </button>
                                             </div>
                                         </td>
@@ -243,7 +243,7 @@ function ClearanceBooks() {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="8" className="text-center py-4">
+                                    <td colSpan="9" className="text-center py-4">
                                         Không tìm thấy sách thanh lý nào
                                     </td>
                                 </tr>

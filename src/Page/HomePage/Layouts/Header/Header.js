@@ -69,7 +69,7 @@ function Header({ setSearchValue, setSortOption }) {
                             {window.location.pathname === '/books' && (
                                 <select
                                     className="form-select"
-                                    style={{ width: '200px' }}
+                                    style={{ width: '150px' }}
                                     onChange={handleSortChange}
                                     defaultValue=""
                                 >

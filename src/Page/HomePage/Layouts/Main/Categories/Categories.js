@@ -17,12 +17,11 @@ import {
     Fade,
     ButtonBase
 } from '@mui/material';
-import { styled, keyframes } from '@mui/system'; // Thêm import keyframes và styled
+import { styled, keyframes } from '@mui/system';
 import { motion } from 'framer-motion';
 
 const cx = classNames.bind(styles);
 
-// Dải màu xanh dương gradient
 const gradientColors = [
     'linear-gradient(135deg, #e0f7fa 0%, #80deea 100%)',
     'linear-gradient(135deg, #80deea 0%, #26c6da 100%)',
@@ -31,21 +30,17 @@ const gradientColors = [
     'linear-gradient(135deg, #01579b 0%, #e0f7fa 100%)',
 ];
 
-// Màu đại diện cho mỗi gradient để tính luminance
 const representativeColors = [
     '#b0f2f2', '#53b2e2', '#15a7d6', '#016fb6', '#70a9cd'
 ];
 
 const ITEMS_PER_PAGE = 16;
 
-// Keyframe float từ file đã ghi nhớ
 const float = keyframes`
   0% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
   100% { transform: translateY(0); }
 `;
-
-// Styled PaginationItem từ file đã ghi nhớ
 const StyledPaginationItem = styled(PaginationItem)(({ theme }) => ({
     '&.Mui-selected': {
         background: 'linear-gradient(45deg, #1e90ff, #00ced1)', // Gradient nền khi được chọn
@@ -103,17 +98,12 @@ function Categories() {
     const [currentPage, setCurrentPage] = useState(1);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        document.title = "Danh mục sách";
-    }, []);
-
     const fetchAllCategories = async () => {
         try {
             const res = await request.get('/api/getAllCategories');
             setCategories(res.data.data);
             setCurrentPage(1);
         } catch (error) {
-            console.error('Lỗi khi lấy danh sách danh mục:', error);
             setCategories([]);
         }
     };
@@ -126,12 +116,12 @@ function Categories() {
             setCategories(res.data.data);
             setCurrentPage(1);
         } catch (error) {
-            console.error('Lỗi khi tìm kiếm danh mục:', error);
             setCategories([]);
         }
     };
 
     useEffect(() => {
+        document.title = "Danh mục sách";
         if (searchValue.trim() === '') {
             fetchAllCategories();
         } else {
@@ -149,7 +139,6 @@ function Categories() {
     };
 
     const handlePageChange = (event
-
         , value) => {
         setCurrentPage(value);
     };

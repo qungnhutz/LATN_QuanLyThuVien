@@ -55,20 +55,11 @@ function ManagementLocation() {
     const handleShowDetail = async (mavitri) => {
         try {
             const res = await request.get(`/api/getBooksByLocation?mavitri=${mavitri}`);
-            console.log('Dữ liệu từ API:', res.data);
             const books = res.data.data || [];
             setBookDetails(books);
             setShowDetailModal(true);
         } catch (error) {
-            console.error('Lỗi khi lấy chi tiết sách:', error);
-            if (error.response?.status === 404) {
-                toast.info('Không có sách nào tại vị trí này!', { autoClose: 3000 });
-                setBookDetails([]);
-            } else {
-                toast.error('Lỗi khi lấy chi tiết sách!', { autoClose: 3000 });
-                setBookDetails([]);
-            }
-            setShowDetailModal(true);
+
         }
     };
 
@@ -83,9 +74,9 @@ function ManagementLocation() {
             .get('/api/getAllLocations')
             .then((res) => {
                 setDataLocation(res.data.data || []);
-                setCurrentPage(1);
+                //setCurrentPage(1);
             })
-            .catch((error) => console.error('Error fetching locations:', error));
+            .catch((error) => console.error(error));
     }, [shouldRefresh]);
 
     const filteredLocations = dataLocation.filter((location) =>

@@ -16,7 +16,6 @@ const getToken = () => {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     <React.StrictMode>
-
         <Router>
             <Routes>
                 {publicRoutes.map((route) => (
@@ -32,7 +31,6 @@ root.render(
                             <Route key="default" path="/" element={<App />} />
                         );
                     } catch (error) {
-                        console.error('Token không hợp lệ:', error);
                         return <Route key="default" path="/" element={<App />} />;
                     }
                 })}
@@ -45,9 +43,7 @@ root.render(
                     );
                 })}
             </Routes>
-
         </Router>
-
     </React.StrictMode>
 );
 

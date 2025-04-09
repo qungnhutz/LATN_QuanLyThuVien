@@ -1,11 +1,10 @@
 import classNames from 'classnames/bind';
 import styles from './InfoUser.module.scss';
-import homeStyles from '../HomePage/Layouts/HomePage/HomePage.module.scss';
 import Header from '../HomePage/Layouts/Header/Header';
 import MenuLeft from '../HomePage/Layouts/MenuLeft/MenuLeft';
 import Footer from '../HomePage/Layouts/Footer/Footer';
-import { useEffect, useState, useRef } from 'react';
-import { fetchUserInfo, requestEditProfile } from '../../config/Connect';
+import { useEffect, useState } from 'react';
+import  request from '../../config/Connect';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -38,34 +37,33 @@ function InfoUser() {
         masinhvien: '',
         hoten: '',
         address: '',
-        brithday: '',
+        ngaysinh: '',
         email: '',
         typereader: '',
         sdt: '',
     });
-    useEffect(() => {
-        document.title = "Thông tin người dùng";
-    }, []);
     // Lấy thông tin người dùng
     useEffect(() => {
-        fetchUserInfo()
-            .then((student) => {
-                console.log('Dữ liệu từ API:', student);
+        document.title = "Thông tin người dùng";
+        const getUserInfo = async () => {
+            try {
+                const res = await request.get('/api/getStudentFromToken');
+                const student = res.data;
                 setDataUser(student);
                 setEditData({
                     masinhvien: student.masinhvien || '',
                     hoten: student.hoten || '',
                     address: student.address || '',
-                    brithday: formatDateForDisplay(student.brithday) || '',
+                    ngaysinh: formatDateForDisplay(student.ngaysinh) || '',
                     email: student.email || '',
                     typereader: student.typereader || '',
                     sdt: student.sdt || '',
                 });
-            })
-            .catch((error) => {
-                console.error('Lỗi khi lấy thông tin sinh viên:', error);
+            } catch (error) {
                 toast.error(error.message || 'Lỗi khi lấy thông tin');
-            });
+            }
+        };
+        getUserInfo();
     }, []);
 
     const handleChange = (e) => {
@@ -77,20 +75,18 @@ function InfoUser() {
         if (!editData.hoten || !editData.email || !editData.masinhvien) {
             return toast.error('Vui lòng nhập đủ thông tin bắt buộc (Tên, Email, Mã sinh viên)');
         }
-
         const formattedData = {
             masinhvien: editData.masinhvien,
             hoten: editData.hoten,
             address: editData.address,
-            brithday: formatDateForDatabase(editData.brithday),
+            ngaysinh: formatDateForDatabase(editData.ngaysinh),
             sdt: editData.sdt,
             email: editData.email,
-            typereader: editData.typereader,
+            typereader: editData.typereader
         };
-
         try {
-            const res = await requestEditProfile(formattedData);
-            toast.success(res.message);
+            const res = await request.put('/api/editReader', formattedData);
+            toast.success(res.data.message); // Hiển thị thông báo thành công
             setDataUser({ ...dataUser, ...formattedData });
         } catch (error) {
             toast.error(error.message || 'Lỗi khi cập nhật thông tin');
@@ -213,7 +209,7 @@ function InfoUser() {
                                                     <input
                                                         id="brithday"
                                                         name="brithday"
-                                                        value={editData.brithday}
+                                                        value={editData.ngaysinh}
                                                         onChange={handleChange}
                                                         type="text"
                                                         className="form-control border-0"

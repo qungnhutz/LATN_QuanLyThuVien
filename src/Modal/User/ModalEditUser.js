@@ -11,34 +11,20 @@ function ModalEditUser({ showModalEditUser, setShowModalEditUser, idUser, isAdmi
 
     const handleClose = () => setShowModalEditUser(false);
 
-    const toastOptions = {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-    };
-
     const handleEditUser = async () => {
         try {
             const res = await request.put('/api/updateUser', {
                 masinhvien: idUser,
                 isAdmin: isAdmin,
             });
-
-            toast.success(res.data.message || 'Cập nhật người dùng thành công!', {
-                ...toastOptions,
+            toast.success(res.data.message,{
                 onClose: () => {
                     handleClose();
-                    onEditSuccess(); // Gọi callback để cập nhật dữ liệu
+                    onEditSuccess();
                 },
             });
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật!', toastOptions);
-            console.error('Error:', error);
+            toast.error(error.response?.data?.message);
         }
     };
 

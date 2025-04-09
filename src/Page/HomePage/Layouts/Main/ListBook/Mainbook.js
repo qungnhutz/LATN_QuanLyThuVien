@@ -18,7 +18,6 @@ import { styled, keyframes } from '@mui/system';
 
 const ITEMS_PER_PAGE = 16;
 
-// Keyframe animations
 const pulse = keyframes`
     0% { transform: scale(1); }
     50% { transform: scale(1.02); }
@@ -122,7 +121,6 @@ function MainBooks({ dataBooks, isMenuOpen, searchQuery = '', sortOption = '' })
         return fullText.length <= maxLength ? fullText : `${fullText.substring(0, maxLength - 3)}...`;
     };
 
-    // Styled components
     const StyledCard = styled(Card)(({ theme }) => ({
         boxShadow: '0 6px 25px rgba(0, 0, 0, 0.15)',
         borderRadius: '16px',
@@ -197,24 +195,34 @@ function MainBooks({ dataBooks, isMenuOpen, searchQuery = '', sortOption = '' })
         '&:hover': {
             transform: 'scale(1.1) rotate(2deg)',
         },
+        [theme.breakpoints.down('sm')]: {
+            height: 200, // Giảm chiều cao ảnh trên mobile
+        },
+        [theme.breakpoints.down('xs')]: {
+            height: 150, // Giảm thêm trên màn hình rất nhỏ
+        },
     }));
 
     return (
         <Fade in={pageLoaded} timeout={600}>
             <Box
                 sx={{
-                    padding: 3,
+                    padding: { xs: 1, sm: 2, md: 3 }, // Giảm padding trên mobile
                     backgroundColor: '#f5f5f5',
                     minHeight: '100vh',
-                    animation: pageLoaded ? `${pageEnter} 0.6s ease-out` : 'none'
+                    animation: pageLoaded ? `${pageEnter} 0.6s ease-out` : 'none',
                 }}
             >
                 <Slide direction="up" in={pageLoaded} timeout={800}>
                     <Box
                         sx={{
                             display: 'grid',
-                            gridTemplateColumns: `repeat(${isMenuOpen ? 3 : 4}, minmax(250px, 1fr))`,
-                            gap: 3,
+                            gridTemplateColumns: {
+                                xs: 'repeat(1, minmax(250px, 1fr))', // 1 cột trên mobile nhỏ
+                                sm: 'repeat(2, minmax(250px, 1fr))', // 2 cột trên mobile lớn
+                                md: `repeat(${isMenuOpen ? 3 : 4}, minmax(250px, 1fr))`, // Desktop
+                            },
+                            gap: { xs: 1, sm: 2, md: 3 }, // Giảm khoảng cách trên mobile
                         }}
                     >
                         {currentBooks.map((item, index) => (
@@ -230,7 +238,7 @@ function MainBooks({ dataBooks, isMenuOpen, searchQuery = '', sortOption = '' })
                                         image={item.img}
                                         alt={item.tensach}
                                     />
-                                    <CardContent sx={{ flexGrow: 1, padding: 2 }}>
+                                    <CardContent sx={{ flexGrow: 1, padding: { xs: 1, sm: 2 } }}>
                                         <Fade in={pageLoaded} timeout={800 + index * 100}>
                                             <Typography
                                                 variant="h6"
@@ -242,44 +250,70 @@ function MainBooks({ dataBooks, isMenuOpen, searchQuery = '', sortOption = '' })
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
                                                     whiteSpace: 'nowrap',
+                                                    fontSize: { xs: '1rem', sm: '1.25rem' }, // Giảm font trên mobile
                                                 }}
                                             >
                                                 {item.tensach}
                                             </Typography>
                                         </Fade>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                        <Typography
+                                            variant="body2"
+                                            color="text.secondary"
+                                            sx={{ mb: 0.5, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                                        >
                                             <strong>Mã Sách:</strong> {item.masach}
                                         </Typography>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                        <Typography
+                                            variant="body2"
+                                            color="text.secondary"
+                                            sx={{ mb: 0.5, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                                        >
                                             <strong>Tác Giả:</strong> {item.tacgia}
                                         </Typography>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                        <Typography
+                                            variant="body2"
+                                            color="text.secondary"
+                                            sx={{ mb: 0.5, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                                        >
                                             <strong>Nhà xuất bản:</strong> {item.nhaxuatban}
                                         </Typography>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                        <Typography
+                                            variant="body2"
+                                            color="text.secondary"
+                                            sx={{ mb: 0.5, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                                        >
                                             <strong>Tổng số sách:</strong> {item.Tongsoluong}
                                         </Typography>
                                         {item.vitri && item.vitri.length > 0 && (
                                             <Typography
                                                 variant="body2"
                                                 color="text.secondary"
-                                                title={item.vitri.map((v) => `${v.mavitri} (${v.soluong - v.soluongmuon})`).join(', ')}
+                                                title={item.vitri
+                                                    .map((v) => `${v.mavitri} (${v.soluong - v.soluongmuon})`)
+                                                    .join(', ')}
                                                 sx={{
                                                     mb: 0.5,
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
                                                     whiteSpace: 'nowrap',
+                                                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
                                                 }}
                                             >
                                                 <strong>Vị trí:</strong> {truncateLocation(item.vitri)}
                                             </Typography>
                                         )}
                                         <Slide direction="up" in={pageLoaded} timeout={1000 + index * 100}>
-                                            <Box mt={2} display="flex" justifyContent="space-between">
+                                            <Box
+                                                mt={2}
+                                                display="flex"
+                                                justifyContent="space-between"
+                                                sx={{ flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }}
+                                            >
                                                 <StyledButton
                                                     size="small"
                                                     color="info"
                                                     onClick={() => handleViewDetail(item.masach)}
+                                                    sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}
                                                 >
                                                     Xem Chi Tiết
                                                 </StyledButton>
@@ -288,6 +322,7 @@ function MainBooks({ dataBooks, isMenuOpen, searchQuery = '', sortOption = '' })
                                                     variant="contained"
                                                     color="primary"
                                                     onClick={() => handleShow(item.masach, item.tensach, item.vitri)}
+                                                    sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}
                                                 >
                                                     Gửi Yêu Cầu
                                                 </StyledButton>

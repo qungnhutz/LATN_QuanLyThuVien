@@ -29,11 +29,9 @@ function BuyBook() {
     const [maphieumua, setMaphieumua] = useState('');
     const [dataBuyBooks, setDataBuyBooks] = useState([]);
     const [loading, setLoading] = useState(false);
-    // State cho phân trang
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10); // Số lượng phiếu mua mỗi trang
+    const [itemsPerPage] = useState(10);
 
-    // Gọi API lấy toàn bộ danh sách sách cần mua
     const fetchBuyBooks = async () => {
         setLoading(true);
         try {
@@ -117,11 +115,10 @@ function BuyBook() {
         setLoading(true);
         try {
             const res = await request.get('/api/suggestBooksToBuy');
-            toast.success(res.data.message || 'Đã gợi ý sách cần mua thành công!', toastOptions);
-            fetchBuyBooks(); // Cập nhật lại danh sách sau khi gợi ý
+            toast.success(res.data.message);
+            fetchBuyBooks();
         } catch (error) {
-            console.error('Lỗi khi gợi ý sách cần mua:', error);
-            toast.error(error.response?.data?.message || 'Lỗi khi gợi ý sách cần mua!', toastOptions);
+            toast.error(error.response?.data?.message);
         } finally {
             setLoading(false);
         }
@@ -244,8 +241,6 @@ function BuyBook() {
                         </table>
                     </div>
                 )}
-
-                {/* Pagination */}
                 {!loading && dataBuyBooks.length > 0 && (
                     <nav aria-label="Page navigation">
                         <ul className="pagination justify-content-center mt-3">
@@ -284,8 +279,6 @@ function BuyBook() {
                     </nav>
                 )}
             </div>
-
-            {/* Modals */}
             <ModalAddBuyBook
                 showModalAddBuyBook={showModalAddBuyBook}
                 setShowModalAddBuyBook={setShowModalAddBuyBook}

@@ -9,22 +9,14 @@ function ModalDeleteUser({ showModalDeleteUser, setShowModalDeleteUser, masinhvi
 
     const handleDeleteUser = async () => {
         try {
-            console.log('Deleting user with masinhvien:', masinhvien);
             const res = await request.delete('/api/deleteUser', {
                 data: { masinhvien },
             });
             toast.success(res.data.message);
             handleClose();
-            onDeleteSuccess(); // Gọi callback để thông báo xóa thành công
+            onDeleteSuccess();
         } catch (error) {
-            console.error('Error deleting user:', error.response);
-            if (error.response?.status === 403) {
-                toast.error('Không thể xóa tài khoản admin!');
-            } else if (error.response?.status === 404) {
-                toast.error('Không tìm thấy người dùng');
-            } else {
-                toast.error(error.response?.data?.message || 'Lỗi khi xóa người dùng');
-            }
+                toast.error(error.response?.data?.message);
         }
     };
 

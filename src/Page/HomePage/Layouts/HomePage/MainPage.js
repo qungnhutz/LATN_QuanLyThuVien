@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, Box, Grid, Button, Typography, styled } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
+import request from '../../../../config/Connect';
 import Slider from 'react-slick';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import 'slick-carousel/slick/slick.css';
@@ -557,19 +558,14 @@ const HomePage = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const baseUrl = 'http://localhost:5000';
                 const [featuredResponse, recommendedResponse] = await Promise.all([
-                    fetch(`${baseUrl}/api/GetLatestUpdatedBooks`),
-                    fetch(`${baseUrl}/api/GetMostBorrowedBooks`),
+                    request.get('/api/GetLatestUpdatedBooks'),
+                    request.get('/api/GetMostBorrowedBooks'),
                 ]);
 
-                if (!featuredResponse.ok) throw new Error(`Lỗi API Sách Nổi Bật: ${featuredResponse.status}`);
-                if (!recommendedResponse.ok) throw new Error(`Lỗi API Sách Đề Xuất: ${recommendedResponse.status}`);
-
-                const [featuredData, recommendedData] = await Promise.all([
-                    featuredResponse.json(),
-                    recommendedResponse.json(),
-                ]);
+                // Với axios, data đã nằm trực tiếp trong response.data
+                const featuredData = featuredResponse.data;
+                const recommendedData = recommendedResponse.data;
 
                 setFeaturedBooks(featuredData);
                 setRecommendedBooks(recommendedData);

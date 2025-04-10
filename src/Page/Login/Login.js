@@ -1,6 +1,6 @@
 import classNames from 'classnames/bind';
 import styles from './Login.module.scss';
-import request  from '../../config/Connect';
+import request from '../../config/Connect';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Checkbox from '@mui/material/Checkbox';
@@ -25,15 +25,30 @@ function Login() {
         if (savedMaSinhVien) setmasinhvien(savedMaSinhVien);
         if (savedPassword) setPassword(savedPassword);
     }, []);
+
     const handleLogin = async () => {
         try {
             const data = { masinhvien, password };
             const res = await request.post('api/login', data);
             toast.success(res.data.message);
+
             if (res.data.token) {
-                document.cookie = `token=${res.data.token}; path=/`;
+                const hostname = window.location.hostname;
+                const cookieOptions = {
+                    path: '/',
+                    domain: hostname === 'localhost' ? undefined : hostname,
+                    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                };
+
+                const cookieString = Object.entries(cookieOptions)
+                    .filter(([key, value]) => value !== undefined)
+                    .map(([key, value]) => `${key}=${value}`)
+                    .join('; ');
+
+                document.cookie = `token=${res.data.token}; ${cookieString}`;
                 navigate('/homepage');
             }
+
             if (checkSaveLogin) {
                 localStorage.setItem('masinhvien', masinhvien);
                 localStorage.setItem('password', password);
@@ -56,7 +71,7 @@ function Login() {
                         <h2>Đại Học Kinh Tế - Kĩ Thuật Công Nghiệp</h2>
                     </div>
                     <div className={cx('image-container')}>
-                        <img src="/Books_preview.png" alt="Library Image" className={cx('animated-image')} />
+                        <img src="/Books_preview.png" alt="Hình ảnh thư viện" className={cx('animated-image')} />
                     </div>
                 </div>
                 <div className={cx('column-right')}>

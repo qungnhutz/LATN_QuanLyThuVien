@@ -13,6 +13,7 @@ import Contact from '../Page/Support/Contact/Contact';
 import Categories from '../Page/HomePage/Layouts/Main/Categories/Categories';
 import DetailCategory from '../Page/HomePage/Layouts/Main/Categories/DetaiCategory';
 import Guide from '../Page/Support/Guide/Guide';
+import GetBookshelf from '../Page/Admin/Layouts/ManagementLocation/getBookshelf';
 
 export const publicRoutes = [
     { path: '', element: <Login /> },
@@ -21,6 +22,8 @@ export const publicRoutes = [
     { path: '/about', element: <LibraryIntro /> },
     { path: '/contact', element: <Contact /> },
     { path: '/guide', element: <Guide /> },
+    { path: '/getBookshelf', element: <GetBookshelf /> },
+
 ];
 
 export const privateRoutes1 = [

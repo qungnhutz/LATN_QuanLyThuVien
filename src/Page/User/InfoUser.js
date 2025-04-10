@@ -4,10 +4,11 @@ import Header from '../HomePage/Layouts/Header/Header';
 import MenuLeft from '../HomePage/Layouts/MenuLeft/MenuLeft';
 import Footer from '../HomePage/Layouts/Footer/Footer';
 import { useEffect, useState } from 'react';
-import  request from '../../config/Connect';
+import request from '../../config/Connect';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+
 const cx = classNames.bind(styles);
 
 // Hàm xử lý định dạng ngày từ yyyy-mm-dd để hiển thị dd/mm/yyyy
@@ -42,13 +43,19 @@ function InfoUser() {
         typereader: '',
         sdt: '',
     });
-    // Lấy thông tin người dùng
+
+    // Lấy thông tin người dùng từ API
     useEffect(() => {
         document.title = "Thông tin người dùng";
         const getUserInfo = async () => {
             try {
-                const res = await request.get('/api/getStudentFromToken');
-                const student = res.data;
+                const res = await request.get('/api/getStudentFromToken', {
+                    withCredentials: true, // Gửi cookie nếu API sử dụng token từ cookie
+                    headers: {
+                        Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : undefined,
+                    },
+                });
+                const student = res.data; // API trả về trực tiếp object student
                 setDataUser(student);
                 setEditData({
                     masinhvien: student.masinhvien || '',
@@ -60,7 +67,8 @@ function InfoUser() {
                     sdt: student.sdt || '',
                 });
             } catch (error) {
-                toast.error(error.message || 'Lỗi khi lấy thông tin');
+                const errorMsg = error.response?.data?.message || 'Lỗi khi lấy thông tin';
+                toast.error(errorMsg);
             }
         };
         getUserInfo();
@@ -82,14 +90,20 @@ function InfoUser() {
             ngaysinh: formatDateForDatabase(editData.ngaysinh),
             sdt: editData.sdt,
             email: editData.email,
-            typereader: editData.typereader
+            typereader: editData.typereader,
         };
         try {
-            const res = await request.put('/api/editReader', formattedData);
+            const res = await request.put('/api/editReader', formattedData, {
+                withCredentials: true, // Gửi cookie nếu cần
+                headers: {
+                    Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : undefined,
+                },
+            });
             toast.success(res.data.message); // Hiển thị thông báo thành công
             setDataUser({ ...dataUser, ...formattedData });
         } catch (error) {
-            toast.error(error.message || 'Lỗi khi cập nhật thông tin');
+            const errorMsg = error.response?.data?.message || 'Lỗi khi cập nhật thông tin';
+            toast.error(errorMsg);
         }
     };
 
@@ -207,8 +221,8 @@ function InfoUser() {
                                                         <i className="bi bi-calendar-fill"></i>
                                                     </span>
                                                     <input
-                                                        id="brithday"
-                                                        name="brithday"
+                                                        id="ngaysinh" // Sửa từ "brithday" thành "ngaysinh" để đồng bộ với name
+                                                        name="ngaysinh"
                                                         value={editData.ngaysinh}
                                                         onChange={handleChange}
                                                         type="text"

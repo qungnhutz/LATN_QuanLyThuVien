@@ -16,13 +16,14 @@ function ManagementLocation() {
     const [showModalAddLocation, setShowModalAddLocation] = useState(false);
     const [showModalEditLocation, setShowModalEditLocation] = useState(false);
     const [showModalDeleteLocation, setShowModalDeleteLocation] = useState(false);
+    const [showModalQR, setShowModalQR] = useState(false);
+    const [qrData, setQrData] = useState([]);
     const [valueSearch, setValueSearch] = useState('');
     const [selectedLocation, setSelectedLocation] = useState(null);
     const [selectedMavitri, setSelectedMavitri] = useState('');
     const [shouldRefresh, setShouldRefresh] = useState(false);
     const [bookDetails, setBookDetails] = useState([]);
     const [showDetailModal, setShowDetailModal] = useState(false);
-
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
 
@@ -38,6 +39,16 @@ function ManagementLocation() {
     const handleModalDeleteLocation = (mavitri) => {
         setShowModalDeleteLocation(!showModalDeleteLocation);
         setSelectedMavitri(mavitri);
+    };
+
+    const handleModalQR = async () => {
+        try {
+            const res = await request.get('/api/generateQRCodePerShelf');
+            setQrData(res.data.qrData || []);
+            setShowModalQR(true);
+        } catch (error) {
+            toast.error('Lỗi khi lấy mã QR: ' + error.message);
+        }
     };
 
     const handleDeleteSuccess = () => {
@@ -59,8 +70,20 @@ function ManagementLocation() {
             setBookDetails(books);
             setShowDetailModal(true);
         } catch (error) {
-
+            toast.error('Lỗi khi lấy chi tiết sách!');
         }
+    };
+
+    const handleSaveAllQRCodes = () => {
+        qrData.forEach((qr, index) => {
+            const link = document.createElement('a');
+            link.href = qr.qrCodeBase64;
+            link.download = `QR_${qr.coso}_${qr.soke}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+        toast.success('Đã tải xuống tất cả mã QR!');
     };
 
     const handleKeyDown = (e) => {
@@ -74,7 +97,6 @@ function ManagementLocation() {
             .get('/api/getAllLocations')
             .then((res) => {
                 setDataLocation(res.data.data || []);
-                //setCurrentPage(1);
             })
             .catch((error) => console.error(error));
     }, [shouldRefresh]);
@@ -122,17 +144,24 @@ function ManagementLocation() {
                             />
                         </form>
                     </div>
-                    <div className="col-12 col-md-3 text-center text-md-end">
+                    <div className="col-12 col-md-3 text-center text-md-end d-flex justify-content-end gap-2">
                         <button
                             onClick={handleModalAddLocation}
-                            className="btn btn-primary w-100 w-md-auto"
+                            className="btn btn-primary"
                         >
                             <i className="bi bi-plus-lg me-2"></i>Thêm Vị Trí
+                        </button>
+                        <button
+                            onClick={handleModalQR}
+                            className="btn btn-success"
+                        >
+                            <i className="bi bi-qr-code me-2"></i>QR
                         </button>
                     </div>
                 </div>
             </div>
 
+            {/* Table and Pagination - unchanged */}
             <div className="container">
                 <div className="table-responsive">
                     <table className="table table-striped table-hover table-bordered align-middle">
@@ -223,6 +252,7 @@ function ManagementLocation() {
                 )}
             </div>
 
+            {/* Detail Modal - unchanged */}
             {showDetailModal && (
                 <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog modal-lg">
@@ -280,6 +310,60 @@ function ManagementLocation() {
                                     type="button"
                                     className="btn btn-secondary"
                                     onClick={() => setShowDetailModal(false)}
+                                >
+                                    Đóng
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* QR Modal */}
+            {showModalQR && (
+                <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-xl">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Mã QR Theo Kệ</h5>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => setShowModalQR(false)}
+                                ></button>
+                            </div>
+                            <div className="modal-body">
+                                {qrData.length > 0 ? (
+                                    <div className="row">
+                                        {qrData.map((qr, index) => (
+                                            <div key={index} className="col-12 col-md-4 mb-4 text-center">
+                                                <h6>{`Cơ sở: ${qr.coso} - Kệ: ${qr.soke}`}</h6>
+                                                <img
+                                                    src={qr.qrCodeBase64}
+                                                    alt={`QR for ${qr.coso}_${qr.soke}`}
+                                                    className="img-fluid"
+                                                    style={{ maxWidth: '200px' }}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-center">Không có mã QR nào để hiển thị.</p>
+                                )}
+                            </div>
+                            <div className="modal-footer">
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={handleSaveAllQRCodes}
+                                    disabled={qrData.length === 0}
+                                >
+                                    Lưu Tất Cả
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => setShowModalQR(false)}
                                 >
                                     Đóng
                                 </button>

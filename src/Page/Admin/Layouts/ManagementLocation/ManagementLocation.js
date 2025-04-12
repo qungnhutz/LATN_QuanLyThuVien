@@ -8,6 +8,8 @@ import ModalAddLocation from '../../../../Modal/Location/ModalAddLocation';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
+import { Button, Box, Modal, Typography } from '@mui/material';
 
 const cx = classNames.bind(styles);
 
@@ -22,10 +24,16 @@ function ManagementLocation() {
     const [selectedLocation, setSelectedLocation] = useState(null);
     const [selectedMavitri, setSelectedMavitri] = useState('');
     const [shouldRefresh, setShouldRefresh] = useState(false);
-    const [bookDetails, setBookDetails] = useState([]);
+    const [bookDetails, setBookDetails] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [loadingBook, setLoadingBook] = useState(false);
+    const [bookError, setBookError] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
+    const [selectedCoso, setSelectedCoso] = useState('');
+    const [selectedSoke, setSelectedSoke] = useState('');
+    const [cosoOptions, setCosoOptions] = useState([]);
+    const [sokeOptions, setSokeOptions] = useState([]);
 
     const handleModalAddLocation = () => {
         setShowModalAddLocation(!showModalAddLocation);
@@ -65,12 +73,26 @@ function ManagementLocation() {
 
     const handleShowDetail = async (mavitri) => {
         try {
+            setLoadingBook(true);
+            setBookError(null);
             const res = await request.get(`/api/getBooksByLocation?mavitri=${mavitri}`);
             const books = res.data.data || [];
-            setBookDetails(books);
+            if (books.length > 0) {
+                // Fetch full book details using masach of the first book
+                const bookRes = await request.get('/api/SearchBookByMaSach', {
+                    params: { masach: books[0].masach },
+                });
+                setBookDetails(bookRes.data);
+            } else {
+                setBookDetails(null);
+            }
             setShowDetailModal(true);
         } catch (error) {
-            toast.error('Lỗi khi lấy chi tiết sách!');
+            setBookError(error.response?.data?.message || 'Lỗi khi lấy chi tiết sách');
+            setBookDetails(null);
+            setShowDetailModal(true);
+        } finally {
+            setLoadingBook(false);
         }
     };
 
@@ -96,14 +118,22 @@ function ManagementLocation() {
         request
             .get('/api/getAllLocations')
             .then((res) => {
-                setDataLocation(res.data.data || []);
+                const locations = res.data.data || [];
+                setDataLocation(locations);
+                const uniqueCoso = [...new Set(locations.map(item => String(item.coso)))].sort();
+                const uniqueSoke = [...new Set(locations.map(item => String(item.soke)))].sort();
+                setCosoOptions(uniqueCoso);
+                setSokeOptions(uniqueSoke);
             })
             .catch((error) => console.error(error));
     }, [shouldRefresh]);
 
-    const filteredLocations = dataLocation.filter((location) =>
-        location.mavitri.toLowerCase().includes(valueSearch.toLowerCase())
-    );
+    const filteredLocations = dataLocation.filter((location) => {
+        const matchesSearch = location.mavitri.toLowerCase().includes(valueSearch.toLowerCase());
+        const matchesCoso = selectedCoso ? String(location.coso) === selectedCoso : true;
+        const matchesSoke = selectedSoke ? String(location.soke) === selectedSoke : true;
+        return matchesSearch && matchesCoso && matchesSoke;
+    });
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
@@ -128,21 +158,53 @@ function ManagementLocation() {
             <ToastContainer />
             <div className="container my-4">
                 <div className="row align-items-center justify-content-between g-3">
-                    <div className="col-12 col-md-4 text-center text-md-start">
+                    <div className="col-12 col-md-3 text-center text-md-start">
                         <h4 className="mb-0 fw-bold">Quản Lý Vị Trí</h4>
                     </div>
-                    <div className="col-12 col-md-5">
-                        <form className="d-flex" onSubmit={(e) => e.preventDefault()}>
-                            <input
-                                className="form-control me-2"
-                                type="search"
-                                placeholder="Tìm kiếm theo mã vị trí"
-                                aria-label="Search"
-                                value={valueSearch}
-                                onChange={(e) => setValueSearch(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                            />
-                        </form>
+                    <div className="col-12 col-md-6">
+                        <div className="row g-2 align-items-center">
+                            <div className="col-4">
+                                <select
+                                    className="form-select"
+                                    value={selectedCoso}
+                                    onChange={(e) => setSelectedCoso(e.target.value)}
+                                >
+                                    <option value="">Tất cả cơ sở</option>
+                                    {cosoOptions.map((coso) => (
+                                        <option key={coso} value={coso}>
+                                            {coso}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="col-4">
+                                <select
+                                    className="form-select"
+                                    value={selectedSoke}
+                                    onChange={(e) => setSelectedSoke(e.target.value)}
+                                >
+                                    <option value="">Tất cả số kệ</option>
+                                    {sokeOptions.map((soke) => (
+                                        <option key={soke} value={soke}>
+                                            {soke}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="col-4">
+                                <form className="d-flex" onSubmit={(e) => e.preventDefault()}>
+                                    <input
+                                        className="form-control"
+                                        type="search"
+                                        placeholder="Tìm kiếm mã vị trí"
+                                        aria-label="Search"
+                                        value={valueSearch}
+                                        onChange={(e) => setValueSearch(e.target.value)}
+                                        onKeyDown={handleKeyDown}
+                                    />
+                                </form>
+                            </div>
+                        </div>
                     </div>
                     <div className="col-12 col-md-3 text-center text-md-end d-flex justify-content-end gap-2">
                         <button
@@ -161,7 +223,6 @@ function ManagementLocation() {
                 </div>
             </div>
 
-            {/* Table and Pagination - unchanged */}
             <div className="container">
                 <div className="table-responsive">
                     <table className="table table-striped table-hover table-bordered align-middle">
@@ -252,74 +313,118 @@ function ManagementLocation() {
                 )}
             </div>
 
-            {/* Detail Modal - unchanged */}
-            {showDetailModal && (
-                <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog modal-lg">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">Chi Tiết Sách Theo Vị Trí</h5>
-                                <button
-                                    type="button"
-                                    className="btn-close"
-                                    onClick={() => setShowDetailModal(false)}
-                                ></button>
-                            </div>
-                            <div className="modal-body">
-                                <div className="table-responsive">
-                                    <table className="table table-striped table-bordered">
-                                        <thead>
-                                        <tr>
-                                            <th>Mã Sách</th>
-                                            <th>Tên Sách</th>
-                                            <th>Tác Giả</th>
-                                            <th>Nhà Xuất Bản</th>
-                                            <th>Năm XB</th>
-                                            <th>Số Lượng</th>
-                                            <th>Ngày Cập Nhật</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        {bookDetails.length > 0 ? (
-                                            bookDetails.map((book) => (
-                                                <tr key={book._id}>
-                                                    <td>{book.masach}</td>
-                                                    <td>{book.tensach}</td>
-                                                    <td>{book.tacgia}</td>
-                                                    <td>{book.nhaxuatban}</td>
-                                                    <td>{book.namxb}</td>
-                                                    <td>
-                                                        {book.vitri.find(v => v.mavitri === bookDetails[0]?.vitri[0]?.mavitri)?.soluong || 0}
-                                                    </td>
-                                                    <td>{formatDate(book.ngaycapnhat)}</td>
-                                                </tr>
-                                            ))
-                                        ) : (
-                                            <tr>
-                                                <td colSpan="7" className="text-center">
-                                                    Không có sách nào tại vị trí này
-                                                </td>
-                                            </tr>
-                                        )}
-                                        </tbody>
-                                    </table>
+            <Modal
+                open={showDetailModal}
+                onClose={() => setShowDetailModal(false)}
+                aria-labelledby="book-detail-modal"
+                aria-describedby="book-detail-description"
+                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+                <Box sx={{ maxWidth: 800, width: '100%', bgcolor: 'background.paper', borderRadius: 2, overflow: 'auto', maxHeight: '90vh' }}>
+                    {loadingBook ? (
+                        <Typography className="text-center text-muted py-5">
+                            <i className="bi bi-hourglass-split me-2"></i>Đang tải...
+                        </Typography>
+                    ) : bookError ? (
+                        <Typography className="text-danger text-center py-5">
+                            <i className="bi bi-exclamation-triangle me-2"></i>{bookError}
+                        </Typography>
+                    ) : !bookDetails ? (
+                        <Typography className="text-center text-muted py-5">
+                            <i className="bi bi-book me-2"></i>Không tìm thấy sách.
+                        </Typography>
+                    ) : (
+                        <div className="card shadow-lg border-0 rounded-3">
+                            <div className="row g-0">
+                                <div className="col-md-4 p-4">
+                                    <img
+                                        src={bookDetails.img}
+                                        alt={bookDetails.tensach}
+                                        className="img-fluid rounded shadow-sm"
+                                        style={{ maxHeight: '400px', objectFit: 'cover' }}
+                                    />
+                                </div>
+                                <div className="col-md-8 p-4">
+                                    <h1 className="fw-bold mb-4 text-primary">
+                                        <i className="bi bi-book me-2"></i>{bookDetails.tensach}
+                                    </h1>
+                                    <div className="row">
+                                        <div className="col-md-6">
+                                            <ul className="list-unstyled">
+                                                <li className="mb-2">
+                                                    <strong><i className="bi bi-upc-scan me-2"></i>Mã sách:</strong>{' '}
+                                                    <span>{bookDetails.masach}</span>
+                                                </li>
+                                                <li className="mb-2">
+                                                    <strong><i className="bi bi-person-fill me-2"></i>Tác giả:</strong>{' '}
+                                                    <span>{bookDetails.tacgia}</span>
+                                                </li>
+                                                <li className="mb-2">
+                                                    <strong><i className="bi bi-building me-2"></i>Nhà xuất bản:</strong>{' '}
+                                                    <span>{bookDetails.nhaxuatban}</span>
+                                                </li>
+                                                <li className="mb-2">
+                                                    <strong><i className="bi bi-tags-fill me-2"></i>Phiên bản:</strong>{' '}
+                                                    <span>{bookDetails.phienban || 'N/A'}</span>
+                                                </li>
+
+                                            </ul>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <ul className="list-unstyled">
+                                                <li className="mb-2">
+                                                    <strong><i className="bi bi-file-earmark-text me-2"></i>Số trang:</strong>{' '}
+                                                    <span>{bookDetails.pages || 'N/A'}</span>
+                                                </li>
+                                                <li className="mb-2">
+                                                    <strong><i className="bi bi-currency-dollar me-2"></i>Giá:</strong>{' '}
+                                                    <span>{bookDetails.price ? bookDetails.price.toLocaleString() + ' VND' : 'N/A'}</span>
+                                                </li>
+                                                <li className="mb-2">
+                                                    <strong><i className="bi bi-clock-history me-2"></i>Ngày cập nhật:</strong>{' '}
+                                                    <span>{formatDate(bookDetails.ngaycapnhat)}</span>
+                                                </li>
+                                                <li className="mb-2">
+                                                    <strong><i className="bi bi-bookmark-fill me-2"></i>Danh mục:</strong>{' '}
+                                                    <span>{bookDetails.tendanhmuc || 'N/A'}</span>
+                                                </li>
+                                                <li className="mb-2">
+                                                    <strong><i className="bi bi-calendar-event me-2"></i>Năm xuất bản:</strong>{' '}
+                                                    <span>{bookDetails.namxb}</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="modal-footer">
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
+                            <div className="card-body border-top mt-4">
+                                <h4 className="fw-semibold text-muted">
+                                    <i className="bi bi-card-text me-2"></i>Mô tả sách
+                                </h4>
+                                <p className="text-muted">{bookDetails.mota || 'Không có mô tả'}</p>
+                            </div>
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}>
+                                <Button
+                                    variant="outlined"
                                     onClick={() => setShowDetailModal(false)}
+                                    sx={{
+                                        borderColor: '#3498DB',
+                                        color: '#3498DB',
+                                        '&:hover': {
+                                            borderColor: '#2C3E50',
+                                            color: '#2C3E50',
+                                        },
+                                        textTransform: 'none',
+                                    }}
                                 >
                                     Đóng
-                                </button>
-                            </div>
+                                </Button>
+                            </Box>
                         </div>
-                    </div>
-                </div>
-            )}
+                    )}
+                </Box>
+            </Modal>
 
-            {/* QR Modal */}
             {showModalQR && (
                 <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog modal-xl">

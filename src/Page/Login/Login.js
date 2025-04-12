@@ -1,3 +1,4 @@
+// Login.js
 import classNames from 'classnames/bind';
 import styles from './Login.module.scss';
 import request from '../../config/Connect';
@@ -46,7 +47,8 @@ function Login() {
                     .join('; ');
 
                 document.cookie = `token=${res.data.token}; ${cookieString}`;
-                navigate('/homepage');
+                // Chuyển hướng đến homepage với state để kích hoạt modal
+                navigate('/homepage', { state: { showModal: true } });
             }
 
             if (checkSaveLogin) {

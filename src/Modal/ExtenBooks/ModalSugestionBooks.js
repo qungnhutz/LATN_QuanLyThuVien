@@ -45,6 +45,7 @@ const ModalSugestionBooks = ({ show, handleClose }) => {
     const [borrowList, setBorrowList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [open, setOpen] = useState(false);
 
     useEffect(() => {
         if (show) {
@@ -52,25 +53,34 @@ const ModalSugestionBooks = ({ show, handleClose }) => {
         }
     }, [show]);
 
+    useEffect(() => {
+        if (!loading && !error && borrowList.length > 0) {
+            setOpen(true);
+        } else {
+            setOpen(false);
+            if (show && !loading) {
+                handleClose();
+            }
+        }
+    }, [borrowList, loading, error, show, handleClose]);
+
     const fetchBorrows = async () => {
         setLoading(true);
         setError(null);
         try {
-            // Gọi API để lấy danh sách phiếu mượn
             const response = await request.get('/api/GetBorrowsByStudent', {
-                withCredentials: true, // Để gửi cookie chứa token
+                withCredentials: true,
             });
 
             if (response.data.message === 'Danh sách phiếu mượn') {
-                // Lọc các phiếu mượn sắp hết hạn (còn 3 ngày hoặc ít hơn, chưa quá hạn)
                 const today = moment().startOf('day');
-                const nearDueBooks = response.data.data.filter((borrow) => {
+                const relevantBooks = response.data.data.filter((borrow) => {
                     const ngayHentra = moment(borrow.ngayhentra, 'YYYY-MM-DD');
                     const daysUntilDue = ngayHentra.diff(today, 'days');
-                    return daysUntilDue >= 0 && daysUntilDue <= 3 && !borrow.ngaytra; // Chưa trả và sắp hết hạn
+                    return !borrow.ngaytra && daysUntilDue <= 3; // Bao gồm sách đã quá hạn (daysUntilDue < 0) và sắp hết hạn (daysUntilDue <= 3)
                 });
 
-                setBorrowList(nearDueBooks);
+                setBorrowList(relevantBooks);
             } else {
                 setError('Không tìm thấy phiếu mượn nào!');
             }
@@ -81,11 +91,16 @@ const ModalSugestionBooks = ({ show, handleClose }) => {
         }
     };
 
+    const handleCloseModal = () => {
+        setOpen(false);
+        handleClose();
+    };
+
     return (
-        <StyledDialog open={show} onClose={handleClose} aria-labelledby="modal-title">
+        <StyledDialog open={open} onClose={handleCloseModal} aria-labelledby="modal-title">
             <DialogTitle id="modal-title">
                 <Typography variant="h5" fontWeight="bold" color="primary">
-                    Sách sắp hết hạn mượn
+                    Sách sắp hết hạn và đã quá hạn
                 </Typography>
             </DialogTitle>
             <DialogContent>
@@ -99,16 +114,13 @@ const ModalSugestionBooks = ({ show, handleClose }) => {
                         {error}
                     </Alert>
                 )}
-                {!loading && !error && borrowList.length === 0 && (
-                    <Typography variant="body1" color="textSecondary" align="center">
-                        Không có sách nào sắp hết hạn!
-                    </Typography>
-                )}
                 {!loading && !error && borrowList.length > 0 && (
                     <List>
                         {borrowList.map((borrow, index) => {
                             const ngayHentra = moment(borrow.ngayhentra, 'YYYY-MM-DD');
                             const daysUntilDue = ngayHentra.diff(moment().startOf('day'), 'days');
+                            const isOverdue = daysUntilDue < 0;
+
                             return (
                                 <React.Fragment key={borrow.maphieumuon}>
                                     <StyledListItem>
@@ -131,12 +143,20 @@ const ModalSugestionBooks = ({ show, handleClose }) => {
                                                     </Typography>
                                                     <Typography
                                                         variant="body2"
-                                                        color={daysUntilDue === 0 ? 'error.main' : 'warning.main'}
+                                                        color={
+                                                            isOverdue
+                                                                ? 'error.main'
+                                                                : daysUntilDue === 0
+                                                                    ? 'error.main'
+                                                                    : 'warning.main'
+                                                        }
                                                         fontWeight="bold"
                                                     >
-                                                        {daysUntilDue === 0
-                                                            ? 'Hôm nay là ngày cuối cùng!'
-                                                            : `Còn ${daysUntilDue} ngày`}
+                                                        {isOverdue
+                                                            ? `Đã quá hạn ${Math.abs(daysUntilDue)} ngày`
+                                                            : daysUntilDue === 0
+                                                                ? 'Hôm nay là ngày cuối cùng!'
+                                                                : `Còn ${daysUntilDue} ngày`}
                                                     </Typography>
                                                 </>
                                             }
@@ -150,7 +170,7 @@ const ModalSugestionBooks = ({ show, handleClose }) => {
                 )}
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleClose} variant="outlined" color="primary">
+                <Button onClick={handleCloseModal} variant="outlined" color="primary">
                     Đóng
                 </Button>
             </DialogActions>
